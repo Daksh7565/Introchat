@@ -1,0 +1,39 @@
+{
+  "app": {
+    "name": "IntroChat"
+  },
+  "language": {
+    "label": "Language",
+    "names": {
+      "en": "English",
+      "hi": "हिन्दी",
+      "gu": "ગુજરાતી"
+    }
+  },
+  "home": {
+    "title": "Meet the people around you",
+    "scanPrompt": "Scan the QR code on your table to get started."
+  },
+  "landing": {
+    "title": "Welcome to IntroChat",
+    "notOpenYet": "Chat at this table is not open yet. Please check back soon."
+  },
+  "admin": {
+    "title": "Admin Console",
+    "notAvailableYet": "The Admin Console is not available yet."
+  },
+  "notFound": {
+    "title": "Page not found",
+    "body": "This link is not valid. Scan the QR code on your table to get started."
+  },
+  "routeError": {
+    "title": "Something went wrong",
+    "body": "Please reload the page. If it keeps happening, scan the QR code again.",
+    "reload": "Reload"
+  },
+  "update": {
+    "available": "A new version of IntroChat is ready.",
+    "reload": "Update now",
+    "dismiss": "Later"
+  }
+}

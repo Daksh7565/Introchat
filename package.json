@@ -1,0 +1,8 @@
+{
+  "name": "introchat",
+  "private": true,
+  "description": "Repo-level tooling only. The app lives in frontend/; the backend is supabase/.",
+  "devDependencies": {
+    "supabase": "^2.120.0"
+  }
+}

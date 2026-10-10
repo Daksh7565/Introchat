@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Interim icon until the product name and logo are final. -->
+  <rect width="512" height="512" rx="96" fill="#0f766e"/>
+  <path d="M136 168a40 40 0 0 1 40-40h120a40 40 0 0 1 40 40v72a40 40 0 0 1-40 40h-64l-56 44v-44h0a40 40 0 0 1-40-40z" fill="#ffffff"/>
+  <path d="M244 300h52a56 56 0 0 0 56-56v-28h4a40 40 0 0 1 40 40v64a40 40 0 0 1-40 40h0v40l-50-40h-22a40 40 0 0 1-40-40z" fill="#99f6e4"/>
+</svg>

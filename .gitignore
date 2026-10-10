@@ -1,0 +1,40 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+dev-dist/
+*.tsbuildinfo
+
+# Test output
+coverage/
+playwright-report/
+test-results/
+
+# Environment files: only .env.example is committed. Real values (even public
+# VITE_* ones) differ per environment and live in Cloudflare Pages settings.
+.env
+.env.*
+!.env.example
+
+# Supabase CLI local state (project link, temp files). Never commit: it holds
+# the linked project ref and can hold access tokens.
+supabase/.temp/
+supabase/.branches/
+
+# Field-test raw data can contain precise coordinates of real people's phones.
+# Only the summarised results go into the plan documents.
+documents/field-tests/raw/
+
+# Personal notes and local Claude Code commands: kept on this machine only.
+t.txt
+.claude/
+
+# Logs and OS / editor noise
+*.log
+npm-debug.log*
+.DS_Store
+Thumbs.db
+.vscode/*
+!.vscode/extensions.json
+.idea/
