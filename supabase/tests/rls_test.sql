@@ -8,7 +8,26 @@
 -- guest's phone that was not meant to be.
 -- =============================================================================
 begin;
+-- `supabase test db --linked` connects as a temporary role (cli_login_postgres)
+-- that has no USAGE on schema `extensions`, where pgtap lives, so plan() is
+-- invisible to it. That role is a member of postgres, the owner of everything
+-- the migrations create; tests run as postgres for this transaction only.
+set local role postgres;
 create extension if not exists pgtap with schema extensions;
+-- Put whichever schema pgtap lives in on the path, for this transaction only.
+-- (A DO block, so nothing is printed into the TAP output.)
+do $$
+begin
+  perform set_config(
+    'search_path',
+    (select quote_ident(n.nspname)
+     from pg_extension e
+     join pg_namespace n on n.oid = e.extnamespace
+     where e.extname = 'pgtap') || ', public',
+    true
+  );
+end
+$$;
 select plan(8);
 
 -- Functions anon may call. Empty until M1 adds venue_public / location_check.

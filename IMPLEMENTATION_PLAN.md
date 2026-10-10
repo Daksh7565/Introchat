@@ -76,7 +76,7 @@ Full table with costs: [IDEA_AND_TECH_STACK.md §11](IDEA_AND_TECH_STACK.md#11-t
 | **dev** | free project #1 | Cloudflare preview URL | Razorpay **test** keys | Supabase test phone numbers (no SMS) + gateway for real-phone tests |
 | **prod** | free project #2 | `<name>.pages.dev` → own domain later | test keys until KYC, then live keys | SIM gateway |
 
-Local development: Node LTS + the Supabase CLI (version pinned in the root `package.json`, run as `npx supabase`). No Docker in development or deployment: the app runs locally against the **dev** project; migrations and Edge Functions are pushed to it with the CLI. The one possible exception is the test runner: `npx supabase test db --linked` may start a pgTAP container on the developer's machine (confirmed in M0); that is a local test tool, never part of what is deployed.
+Local development: Node LTS + the Supabase CLI (version pinned in the root `package.json`, run as `npx supabase`). No Docker in development or deployment: the app runs locally against the **dev** project; migrations and Edge Functions are pushed to it with the CLI. The one exception is the test runner: **confirmed in M0 (2026-10-10), `npx supabase test db --linked` runs `pg_prove` in a Docker container even against a cloud project**, so Docker Desktop must be running to execute the pgTAP tests locally. It is a local test tool only, never part of what is deployed; GitHub Actions runners have Docker built in.
 
 Frontend lint is **oxlint** (the Vite template's linter), with `no-explicit-any`, `ban-ts-comment` and `no-non-null-assertion` as errors; formatting is Prettier.
 
