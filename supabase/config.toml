@@ -50,9 +50,9 @@ port = 54329
 # Configure one of the supported pooler modes: `transaction`, `session`.
 pool_mode = "transaction"
 # How many server connections to allow per user/database pair.
-default_pool_size = 20
+default_pool_size = 15
 # Maximum number of client connections allowed.
-max_client_conn = 100
+max_client_conn = 200
 
 # [db.vault]
 # secret_key = "env(SECRET_VALUE)"
@@ -136,8 +136,8 @@ enabled = true
 # Store analytical data in S3 for running ETL jobs over Iceberg Catalog
 # This feature is only available on the hosted platform.
 [storage.analytics]
-enabled = false
-max_namespaces = 5
+enabled = true
+max_namespaces = 10
 max_tables = 10
 max_catalogs = 2
 
@@ -150,6 +150,9 @@ enabled = true
 max_buckets = 10
 max_indexes = 5
 
+[storage.image_transformation]
+enabled = true
+
 # Vector Buckets is available to Supabase Pro plan.
 # [storage.vector.buckets.documents-openai]
 
@@ -157,11 +160,11 @@ max_indexes = 5
 enabled = true
 # The base URL of your website. Used as an allow-list for redirects and for constructing URLs used
 # in emails.
-site_url = "http://127.0.0.1:3000"
+site_url = "http://localhost:3000"
 # The public URL that Auth serves on. Defaults to the API external URL with `/auth/v1` appended.
 # external_url = ""
 # A list of *exact* URLs that auth providers are permitted to redirect to post authentication.
-additional_redirect_urls = ["https://127.0.0.1:3000"]
+additional_redirect_urls = []
 # How long tokens are valid for, in seconds. Defaults to 3600 (1 hour), maximum 604,800 (1 week).
 jwt_expiry = 3600
 # JWT issuer URL. If not set, defaults to auth.external_url.
@@ -219,18 +222,23 @@ web3 = 30
 
 [auth.email]
 # Allow/disallow new user signups via email to your project.
+# Must stay true. Verified on dev (M2 phase 1): false here switches off the
+# whole email provider, including password SIGN-IN, which locks every admin out
+# of the Console. Public email sign-ups are refused instead by the
+# before-user-created hook (migration guest_identity): only emails an admin has
+# approved may become accounts.
 enable_signup = true
 # If enabled, a user will be required to confirm any email change on both the old, and new email
 # addresses. If disabled, only the new email is required to confirm.
 double_confirm_changes = true
 # If enabled, users need to confirm their email address before signing in.
-enable_confirmations = false
+enable_confirmations = true
 # If enabled, users will need to reauthenticate or have logged in recently to change their password.
 secure_password_change = false
 # Controls the minimum amount of time that must pass before sending another signup confirmation or password reset email.
-max_frequency = "1s"
+max_frequency = "1m0s"
 # Number of characters used in the email OTP.
-otp_length = 6
+otp_length = 8
 # Number of seconds before the email OTP expires (defaults to 1 hour).
 otp_expiry = 3600
 
@@ -257,17 +265,24 @@ otp_expiry = 3600
 
 [auth.sms]
 # Allow/disallow new user signups via SMS to your project.
-enable_signup = false
+# IntroChat: ON. Who may actually get a code (+91 only, not banned, under the
+# daily SIM cap) is enforced by the Send SMS hook: no SMS, no account.
+enable_signup = true
 # If enabled, users need to confirm their phone number before signing in.
 enable_confirmations = false
-# Template for sending OTP to users
-template = "Your code is {{ .Code }}"
+# Template for sending OTP to users. Not used while the Send SMS hook is on (the
+# hook writes its own text); kept accurate in case the hook is ever disabled.
+template = "{{ .Code }} is your IntroChat code. Do not share it."
 # Controls the minimum amount of time that must pass before sending another sms otp.
-max_frequency = "5s"
+# 60 s: matches the app's "Resend code" countdown and limits SIM usage.
+max_frequency = "60s"
+# Seconds an SMS code stays valid. 300 = the "expires in 5 minutes" the SMS
+# text promises (sms-hook logic.ts); the Supabase default is only 60, which a
+# slow SMS can use up before the guest even sees it.
+otp_expiry = 300
 
-# Use pre-defined map of phone number to OTP for testing.
-# [auth.sms.test_otp]
-# 4152127777 = "123456"
+# Test phone numbers (fixed OTP, no SMS sent) are configured for the DEV project
+# only, in [remotes.dev] at the end of this file. They must never reach prod.
 
 # Configure logged in session timeouts.
 # [auth.sessions]
@@ -277,9 +292,12 @@ max_frequency = "5s"
 # inactivity_timeout = "8h"
 
 # This hook runs before a new user is created and allows developers to reject the request based on the incoming user object.
-# [auth.hook.before_user_created]
-# enabled = true
-# uri = "pg-functions://postgres/auth/before-user-created-hook"
+# IntroChat: phone accounts only for +91 numbers that are not banned; email
+# accounts only for addresses an admin approved (public.admin_email_approvals).
+# Function and its rules: migration guest_identity, before_user_created_hook.
+[auth.hook.before_user_created]
+enabled = true
+uri = "pg-functions://postgres/public/before_user_created_hook"
 
 # This hook runs before a token is issued and allows you to add additional claims based on the authentication method used.
 # [auth.hook.custom_access_token]
@@ -301,8 +319,8 @@ max_enrolled_factors = 10
 
 # Control MFA via App Authenticator (TOTP)
 [auth.mfa.totp]
-enroll_enabled = false
-verify_enabled = false
+enroll_enabled = true
+verify_enabled = true
 
 # Configure MFA via Phone Messaging
 [auth.mfa.phone]
@@ -372,6 +390,11 @@ authorization_url_path = "/oauth/consent"
 # Allow dynamic client registration
 allow_dynamic_registration = false
 
+# Called only by the database (pg_net), which proves itself with the shared
+# secret in Vault; there is no user login to verify.
+[functions.push-send]
+verify_jwt = false
+
 [edge_runtime]
 enabled = true
 # Supported request policies: `oneshot`, `per_worker`.
@@ -413,3 +436,34 @@ enabled = true
 # formatted with uppercase keywords, indent 2, max width 180, trailing commas,
 # and column/key alignment. Set to "null" to emit raw, unformatted SQL.
 # format_options = "{\"keywordCase\":\"upper\",\"indent\":2,\"maxWidth\":180,\"commaStyle\":\"trailing\"}"
+
+# -----------------------------------------------------------------------------
+# DEV project only. Settings here override the ones above when this config is
+# pushed to the dev project, and never apply to any other project.
+# -----------------------------------------------------------------------------
+[remotes.dev]
+project_id = "kckjteuwwhqifiofyeii"
+
+# Test guests: these numbers log in with the fixed code below and no SMS is sent.
+# Used by developers and automated tests on dev. Never configure these on prod:
+# anyone who knows them could log in as these guests.
+[remotes.dev.auth.sms.test_otp]
+919000000001 = "123456"
+919000000002 = "123456"
+919000000003 = "123456"
+919000000004 = "123456"
+# Automated end-to-end tests only (e2e/): these accounts are deleted at the
+# start and end of every test run.
+919000000011 = "123456"
+919000000012 = "123456"
+919000000013 = "123456"
+919000000014 = "123456"
+919000000015 = "123456"
+
+# OTP SMS go through the sms-hook Edge Function (SIM gateway phone, decision 16).
+# The secret is read from supabase/.env (git-ignored) at push time; the same value
+# is the function's SEND_SMS_HOOK_SECRET (npx supabase secrets set --env-file supabase/.env).
+[remotes.dev.auth.hook.send_sms]
+enabled = true
+uri = "https://kckjteuwwhqifiofyeii.supabase.co/functions/v1/sms-hook"
+secrets = "env(SEND_SMS_HOOK_SECRET)"

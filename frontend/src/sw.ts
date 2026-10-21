@@ -24,6 +24,58 @@ cleanupOutdatedCaches()
 // single-page app, so all of them are served the precached index.html.
 registerRoute(new NavigationRoute(createHandlerBoundToURL('index.html')))
 
+// Push notifications (ARCHITECTURE §4.14). The server sends the finished text
+// in the guest's language (push-send); this only shows it. Never message text.
+interface PushPayload {
+  title: string
+  body: string
+  tag: string
+  url: string
+}
+
+function isPushPayload(value: unknown): value is PushPayload {
+  if (typeof value !== 'object' || value === null) return false
+  const v = value as Record<string, unknown>
+  return typeof v.title === 'string' && typeof v.body === 'string' && typeof v.tag === 'string'
+}
+
+self.addEventListener('push', (event: PushEvent) => {
+  let data: unknown = null
+  try {
+    data = event.data?.json()
+  } catch {
+    // Not ours or malformed: show nothing rather than a broken notification.
+  }
+  if (!isPushPayload(data)) return
+  event.waitUntil(
+    self.registration.showNotification(data.title, {
+      body: data.body,
+      tag: data.tag,
+      // A new message in the same chat replaces the old notification but still alerts.
+      renotify: true,
+      icon: '/pwa-192x192.png',
+      badge: '/pwa-64x64.png',
+      data: { url: data.url },
+    } as NotificationOptions),
+  )
+})
+
+// Tapping a notification brings the open app forward, or opens it.
+self.addEventListener('notificationclick', (event: NotificationEvent) => {
+  event.notification.close()
+  const data: unknown = event.notification.data
+  const url =
+    typeof data === 'object' && data !== null && 'url' in data && typeof data.url === 'string'
+      ? data.url
+      : '/'
+  event.waitUntil(
+    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((windows) => {
+      const open = windows[0]
+      return open ? open.focus() : self.clients.openWindow(url)
+    }),
+  )
+})
+
 // UpdatePrompt sends SKIP_WAITING only after the user taps "Update now", so a
 // new version never takes over in the middle of a chat on its own.
 self.addEventListener('message', (event: ExtendableMessageEvent) => {

@@ -1,5 +1,6 @@
 import { useTranslation } from 'react-i18next'
 import { useRegisterSW } from 'virtual:pwa-register/react'
+import { reportError } from '../lib/monitoring'
 
 /**
  * Registers the service worker and, when a new version has been downloaded,
@@ -14,9 +15,8 @@ export function UpdatePrompt() {
   } = useRegisterSW({
     onRegisterError(error: unknown) {
       // Not fatal: without a service worker the app still works online; it
-      // only loses install/offline-shell support. Logged so it is visible in
-      // the console now and in Sentry once that is wired (M0 phase 5).
-      console.error('Service worker registration failed', error)
+      // only loses install/offline-shell support. Reported so we notice.
+      reportError(error, 'service-worker-registration')
     },
   })
 

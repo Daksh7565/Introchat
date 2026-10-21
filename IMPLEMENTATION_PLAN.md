@@ -67,7 +67,7 @@ Full table with costs: [IDEA_AND_TECH_STACK.md §11](IDEA_AND_TECH_STACK.md#11-t
 | Frontend | React + TypeScript + Vite, Tailwind, React Router, TanStack Query, Zustand, react-i18next, vite-plugin-pwa, emoji-mart, Leaflet, `qrcode` + `jsPDF`, `@supabase/supabase-js`, Razorpay Checkout.js |
 | Backend | Supabase: Postgres (SQL functions = all business rules), Auth, Realtime, pg_cron, pg_net, Vault, Edge Functions (TypeScript / Deno) |
 | SMS | Android phone + dedicated SIM + SMS gateway app (e.g. the open-source *SMS Gateway for Android*), called from the `sms-hook` Edge Function |
-| Hosting | Cloudflare Pages (frontend), Supabase (backend) |
+| Hosting | Cloudflare Workers serving the built files only (Cloudflare Pages is now part of Workers; static asset requests are free), Supabase (backend) |
 | Ops | GitHub + Actions, Cloudflare R2 (backups), Sentry, UptimeRobot |
 | Tests | pgTAP (database), Vitest, Playwright |
 
@@ -247,24 +247,24 @@ Every milestone ends with something you can click through on a real phone. All "
 - **SMS gateway test**: dedicated SIM + gateway app sends 10 OTP-style SMS to different operators (Jio, Airtel, Vi, BSNL); measure delivery time.
 - **Done when:** the empty app is live on `*.pages.dev`; a migration and a function deploy from the CLI; the field-test numbers are recorded in this document; SMS arrives on all four operators within 30 s.
 
-### M1 — Venues, tables, QR, location
+### M1 — Venues, tables, QR, location *(built 2026-10-10; on-phone verification pending)*
 - Migrations 0001–0002: settings, admins, audit, rate limits, venues, venue_settings, tables, location functions.
 - Admin Console: login + MFA, venue create/edit, map pin + radius, **Test**, **Set pin from my phone**, tables, QR PDF download.
 - Guest: landing, language picker, location permission flow + help screens, `location_check`.
 - **Done when:** a printed QR card opens the landing page; inside/outside matches reality at the test restaurant on Android and iPhone; an inactive table shows the right message.
 
-### M2 — Login, consent, profile, tags
+### M2 — Login, consent, profile, tags *(built and deployed to dev 2026-10-13: hooks, guest identity, login and onboarding screens; real-SMS and on-phone verification pending)*
 - Migration 0003; `sms-hook` with the SIM gateway; daily cap + per-phone limit; ban check in the hook.
 - Auth trigger → profile + handle + phone hash.
 - Onboarding screens: consent, birth year (18+), optional nickname/gender, tag picker with suggestions and bad-word filter.
 - **Done when:** a new phone logs in with a real OTP and finishes onboarding; an under-18 birth year is refused; a banned phone gets no SMS; the cap blocks SMS after N per day (tested with a low cap).
 
-### M3 — Sessions, timer, presence
+### M3 — Sessions, timer, presence *(phases 1–3 built 2026-10-13: migrations sessions, schedule_tick, trim_cron_history; frontend join, presence loop, timer, popups; dev deploy and on-phone test pending)*
 - Migration 0004 + `tick` schedule: `start_session` (free mode), `heartbeat`, offline flag, away grace, `end_session`, warning, final prompt, `continue_free`, logout.
 - Frontend: heartbeat + location loop, server-clock offset, countdown, warning and final popups, ended screen, away/offline banners.
 - **Done when:** with `FREE_SESSION_MINUTES=3, WARNING_BEFORE_MINUTES=1`: warning → final → logout works; *Continue free* extends; walking out of the restaurant logs out ≈3 min later; locking the phone shows "Offline" to others but does not log out; reopening the app at home ends the session immediately.
 
-### M4 — People, requests, chat, push
+### M4 — People, requests, chat, push *(phases 1–4 built 2026-10-14: migrations chat, session_state_venue, push; Edge Function push-send; live chat verified between two guests on dev; push verified server-side on dev (database → push-send → Google push service). On-phone push and the 3-phone test pending)*
 - Migration 0005 + 0008: people list, chat requests, conversations/members, messages, Realtime authorization, push subscriptions, `push-send`.
 - Frontend: People / Requests / Chats tabs, chat screen, typing, seen ticks, read-only state, emoji, reconnect re-sync, notification permission, iPhone "Add to Home Screen" guide.
 - Non-subscriber deletion at session end, read-only chat when the other person leaves.
@@ -285,7 +285,8 @@ Every milestone ends with something you can click through on a real phone. All "
 - **Done when:** a new restaurant can be onboarded and operated entirely from the Console, with no database access.
 
 ### M8 — Hardening and pilot launch
-- Security pass: RLS deny-all test, every `SECURITY DEFINER` function reviewed (`search_path`, `auth.uid()` checks), Edge Function signature checks, CSP headers on Cloudflare Pages.
+- Security pass: RLS deny-all test, every `SECURITY DEFINER` function reviewed (`search_path`, `auth.uid()` checks), Edge Function signature checks, CSP headers on Cloudflare Pages (must allow Supabase, Sentry, `tile.openstreetmap.org` and `nominatim.openstreetmap.org` for the Console map).
+- **Guest bundle budget:** first-load JavaScript ≤ 150 KB gzipped (measured 221 KB at the end of M1, 237 KB after the M2 login and onboarding screens). Levers: load each language's translations on demand instead of all three, keep Console texts out of the guest bundle, load Sentry after first paint. Only the app shell is precached; on-demand code lives in `assets/lazy/` (vite.config.ts).
 - Privacy policy, terms, refund policy, contact/grievance page (also required by Razorpay).
 - Prod project set up, nightly backup job tested (**including a restore** into the dev project), Sentry, UptimeRobot.
 - Load test: 100 simulated guests in one venue (heartbeats + chat) against dev; check Realtime connection count and DB load.
@@ -318,11 +319,12 @@ Every milestone ends with something you can click through on a real phone. All "
 
 | What | How |
 |---|---|
-| Frontend | Cloudflare Pages Git integration: `main` → prod, other branches → preview URLs |
+| Frontend | **Cloudflare Workers static assets** (found in M1: `wrangler pages` now hands off to Workers and failed). Config in `frontend/wrangler.jsonc` (assets `./dist`, single-page-app fallback). **Dev:** `npm run deploy:dev` builds with `frontend/.env.dev-deploy` (committed, public values) and deploys `introchat-dev` → https://introchat-dev.introchat-frontend.workers.dev. **Prod:** a separate Worker on the real domain, set up in M8 (automatic deploys from GitHub Actions). Security headers in `frontend/public/_headers` (full CSP in M8) |
+| Tests (CI) | `.github/workflows/tests.yml` on every PR and push to `main`: frontend typecheck, lint, format, unit tests, build; then pgTAP on dev, after checking dev has every migration in the branch (`db push --dry-run` must report `upToDate`). Needs repo secret `SUPABASE_ACCESS_TOKEN` and repo variable `SUPABASE_DEV_PROJECT_REF` |
 | Database + Edge Functions | GitHub Action: on merge to `main`, `supabase db push` + `supabase functions deploy` to **dev** automatically, then to **prod** after a manual approval |
-| Secrets | Edge Function secrets per project (Razorpay, webhook, SMS gateway, VAPID, hook secret); Vault for the phone-hash key; Cloudflare Pages env vars for the public keys (Supabase URL + anon key, Razorpay key id, VAPID public key) |
+| Secrets | Edge Function secrets per project (Razorpay, webhook, SMS gateway, VAPID, hook secret); Vault for the phone-hash key; Cloudflare Pages env vars for the public keys (Supabase URL + anon key, Razorpay key id, VAPID public key) and `VITE_PUBLIC_APP_URL`, the origin printed inside every QR card (validated at start-up; https only outside a local network) |
 | Backups | Nightly GitHub Action: `pg_dump` of prod → encrypt → Cloudflare R2, keep 14 days. Restore tested in M8. |
-| Errors | Sentry (frontend + Edge Functions) |
+| Errors | Sentry (frontend + Edge Functions), set up in M0 for the frontend (`frontend/src/lib/monitoring.ts`). **Privacy:** user info, cookies, headers, request bodies, URL query parameters and stack-frame variables are all switched off, and there is no tracing or session replay, so no chat text, location or token can reach Sentry. Release = the deployed commit SHA; environment from `VITE_APP_ENV` |
 | Uptime | UptimeRobot on the site and a health RPC |
 | SMS phone | Admin alert when the daily cap is near; admins check the gateway phone is online |
 

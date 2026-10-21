@@ -12,15 +12,271 @@
   },
   "home": {
     "title": "Meet the people around you",
-    "scanPrompt": "Scan the QR code on your table to get started."
+    "scanPrompt": "Scan the QR code on your table to get started.",
+    "tabs": {
+      "people": "People",
+      "requests": "Requests",
+      "chats": "Chats"
+    }
   },
   "landing": {
-    "title": "Welcome to IntroChat",
-    "notOpenYet": "Chat at this table is not open yet. Please check back soon."
+    "welcomeTo": "Welcome to {{venue}}",
+    "subtitle": "See who's here and say hello, anonymously.",
+    "continue": "Continue",
+    "loading": "Opening…",
+    "problems": {
+      "VENUE_NOT_FOUND": {
+        "title": "This QR code is not active",
+        "body": "It may be old or not set up yet. Please ask the staff."
+      },
+      "VENUE_CLOSED": {
+        "title": "Closed for today",
+        "body": "Chat at this venue has closed for today. Come back next time!"
+      },
+      "TABLE_NOT_FOUND": {
+        "title": "This table's QR code no longer works",
+        "body": "Please ask the staff for a new one."
+      }
+    }
+  },
+  "location": {
+    "checking": "Checking you're at {{venue}}…",
+    "inside": "You're at {{venue}}",
+    "outside": "You don't seem to be at {{venue}}",
+    "outsideHelp": "This chat only works inside the restaurant. If you are inside, move a little further in and try again.",
+    "unknown": "We couldn't get a precise location",
+    "unknownHelp": "Move near a window or turn on Precise Location for your browser, then try again.",
+    "denied": "Location is turned off",
+    "deniedHelp": "We use your location only to check you're inside. It is never shown to anyone. Turn it on in your browser settings.",
+    "retry": "Try again",
+    "whyTitle": "First, let's check you're here",
+    "whyBody": "IntroChat works only inside {{venue}}. We use your location once, just to check that. It is never shown to anyone.",
+    "checkButton": "Check my location",
+    "unsupported": "This browser can't share your location",
+    "unsupportedHelp": "Open this page in Chrome or Safari. If it opened inside another app, use its \"Open in browser\" option."
+  },
+  "people": {
+    "offline": "Offline",
+    "inCommon_one": "{{count}} interest in common",
+    "inCommon_other": "{{count}} interests in common",
+    "hereNow_one": "{{count}} person here now",
+    "hereNow_other": "{{count}} people here now",
+    "empty": "No one else is here yet. Check back in a few minutes.",
+    "actions": {
+      "sayHi": "Say hi",
+      "accept": "Accept",
+      "openChat": "Open chat",
+      "requestSent": "Request sent",
+      "notAvailable": "Not available"
+    }
+  },
+  "requests": {
+    "empty": "No chat requests right now.",
+    "wantsToChat": "wants to chat",
+    "expiresIn_one": "Expires in {{count}} minute",
+    "expiresIn_other": "Expires in {{count}} minutes",
+    "accept": "Accept",
+    "decline": "Decline"
+  },
+  "chats": {
+    "empty": "No chats yet. Say hi to someone from People.",
+    "noMessages": "Say hello 👋",
+    "left": "Left",
+    "selectPrompt": "Pick a chat on the left, or say hi to someone from People."
+  },
+  "chat": {
+    "back": "Back",
+    "typing": "typing…",
+    "menu": "More options",
+    "report": "Report",
+    "block": "Block",
+    "seen": "Seen",
+    "sent": "Sent",
+    "readOnly": "{{handle}} has left. You can still read and report this chat.",
+    "placeholder": "Type a message",
+    "send": "Send",
+    "charsLeft_one": "{{count}} character left",
+    "charsLeft_other": "{{count}} characters left",
+    "sending": "Sending…",
+    "notSent": "Not sent",
+    "notSentHelp": "Some messages weren't sent."
+  },
+  "session": {
+    "timeLeft": "{{time}} left",
+    "warningTitle_one": "{{count}} minute left",
+    "warningTitle_other": "{{count}} minutes left",
+    "warningBody": "Your session ends soon. Want more time?",
+    "finalTitle": "Your time is up",
+    "finalBody_one": "Choose an option within {{count}} second, or you'll be logged out.",
+    "finalBody_other": "Choose an option within {{count}} seconds, or you'll be logged out.",
+    "options": {
+      "continueFree_one": "Continue for {{count}} more minute",
+      "continueFree_other": "Continue for {{count}} more minutes",
+      "continuePaid_one": "Continue {{count}} min · {{price}}",
+      "continuePaid_other": "Continue {{count}} min · {{price}}",
+      "useScan_one": "Use 1 scan · +{{count}} min",
+      "useScan_other": "Use 1 scan · +{{count}} min",
+      "subscribe": "Get {{scans}} scans · {{price}}",
+      "subscribeComingSoon": "Subscription · Coming soon",
+      "scansLeft_one": "{{count}} scan left",
+      "scansLeft_other": "{{count}} scans left",
+      "notNow": "Not now",
+      "logOut": "Log out"
+    },
+    "loading": "Loading…",
+    "leave": "Leave",
+    "leaveConfirm": "Tap again to leave",
+    "away": "You seem to be outside {{venue}}. Come back within {{time}} or your session will end.",
+    "offline": "No connection. Your session continues; reconnect to keep chatting."
+  },
+  "ended": {
+    "title": "Your session has ended",
+    "reasons": {
+      "expired": "Your time ran out.",
+      "left_venue": "You left the restaurant.",
+      "user_logout": "You logged out.",
+      "kicked": "The restaurant ended your session.",
+      "banned": "Your account has been blocked.",
+      "venue_closed": "The restaurant has closed for today."
+    },
+    "chatsDeleted": "Your chats from this visit have been deleted.",
+    "scanAgain": "Scan the QR code on your table to start again."
   },
   "admin": {
     "title": "Admin Console",
-    "notAvailableYet": "The Admin Console is not available yet."
+    "loading": "Checking your access…",
+    "retry": "Try again",
+    "auth": {
+      "title": "Admin sign in",
+      "email": "Email",
+      "password": "Password",
+      "signIn": "Sign in",
+      "signingIn": "Signing in…",
+      "signOut": "Sign out"
+    },
+    "mfa": {
+      "setupTitle": "Set up 2-step verification",
+      "setupBody": "Admin access needs a code from an authenticator app (Google Authenticator, Microsoft Authenticator…) every time you sign in.",
+      "start": "Set up authenticator",
+      "starting": "Preparing…",
+      "scan": "Scan this QR code with your authenticator app, then enter the 6-digit code it shows.",
+      "manualKey": "Can't scan? Enter this key:",
+      "codeLabel": "6-digit code",
+      "verify": "Verify",
+      "verifying": "Checking…",
+      "verifyTitle": "Enter your verification code",
+      "verifyBody": "Open your authenticator app and enter the 6-digit code for IntroChat."
+    },
+    "notAdmin": {
+      "title": "No admin access",
+      "body": "{{email}} is not an IntroChat admin. Ask an existing admin to give you access."
+    },
+    "home": {
+      "signedInAs": "Signed in as {{email}}",
+      "venuesNext": "Venue and table management arrives in the next update."
+    },
+    "saving": "Saving…",
+    "venues": {
+      "title": "Venues",
+      "new": "New venue",
+      "create": "Create venue",
+      "empty": "No venues yet. Create the first one.",
+      "active": "Active",
+      "inactive": "Inactive",
+      "tables_one": "{{count}} active table",
+      "tables_other": "{{count}} active tables"
+    },
+    "venue": {
+      "detailsTitle": "Details",
+      "name": "Name",
+      "slug": "Link name",
+      "slugHelp": "Lower-case letters, numbers and hyphens. Part of every QR link of this venue.",
+      "slugLocked": "Fixed: it is inside every printed QR card of this venue.",
+      "type": "Type",
+      "types": {
+        "restaurant": "Restaurant",
+        "cafe": "Café"
+      },
+      "address": "Address",
+      "city": "City"
+    },
+    "pin": {
+      "title": "Location pin",
+      "searchLabel": "Search address",
+      "searchPlaceholder": "Search an address or place",
+      "search": "Search",
+      "noResults": "No places found. Try a shorter search, or drag the pin.",
+      "coordinates": "Pin: {{latitude}}, {{longitude}}",
+      "dragHint": "Drag the pin or tap the map to move it.",
+      "fromPhoneHelp": "At the venue: stand in the middle of the seating area and keep the phone still.",
+      "fromPhone": "Set pin from my phone here (30 s)",
+      "collecting_one": "Hold still… {{seconds}}s · {{count}} reading",
+      "collecting_other": "Hold still… {{seconds}}s · {{count}} readings",
+      "fromPhoneDone_one": "Pin set from {{count}} precise reading (best ±{{accuracy}} m). Check it on the map, then save.",
+      "fromPhoneDone_other": "Pin set from {{count}} precise readings (best ±{{accuracy}} m). Check it on the map, then save.",
+      "fromPhoneImprecise": "No precise reading here (best ±{{accuracy}} m). Location may be weak at this venue: try near a window, and note it.",
+      "outsideIndia": "The pin must be in India. Check that it is on the right place.",
+      "save": "Save pin",
+      "undo": "Undo"
+    },
+    "test": {
+      "title": "On-site test",
+      "help": "Walk around with this phone: to each table, the door and outside. You see live what a guest standing here would get.",
+      "start": "Start live test",
+      "stop": "Stop test",
+      "states": {
+        "inside": "INSIDE: a guest here can join",
+        "outside": "OUTSIDE: a guest here is refused",
+        "unknown": "UNKNOWN: location not precise enough here"
+      },
+      "numbers": "{{distance}} m from pin · accuracy ±{{accuracy}} m · radius {{radius}} m · max accuracy {{maxAccuracy}} m",
+      "live": "Updating as you move…"
+    },
+    "settings": {
+      "title": "Rules for this venue",
+      "global": "Default: {{value}}",
+      "range": "allowed {{min}}–{{max}}",
+      "useGlobal": "Use default",
+      "on": "On",
+      "off": "Off",
+      "save": "Save",
+      "clear": "Use default"
+    },
+    "status": {
+      "title": "Status",
+      "activeHelp": "Active: guests can scan this venue's QR codes.",
+      "inactiveHelp": "Inactive: QR codes show \"not active\". Add tables and check the pin, then activate.",
+      "activate": "Activate venue",
+      "deactivate": "Deactivate venue"
+    },
+    "tables": {
+      "title": "Tables and QR cards",
+      "empty": "No tables yet.",
+      "addTitle": "Add tables",
+      "fields": {
+        "prefix": "Prefix",
+        "from": "From",
+        "to": "To",
+        "pad": "Digits"
+      },
+      "preview_one": "{{count}} table: {{first}}",
+      "preview_other": "{{count}} tables: {{first}} … {{last}}",
+      "invalidRange": "Enter a range of 1 to {{max}} tables.",
+      "add_one": "Add {{count}} table",
+      "add_other": "Add {{count}} tables",
+      "label": "Table name",
+      "active": "Active",
+      "card": "QR card",
+      "regenerate": "New QR",
+      "regenerateConfirm": "Make a new QR for {{label}}? Its printed card stops working immediately and must be replaced.",
+      "downloadPdf_one": "Download QR cards (PDF, {{count}} table)",
+      "downloadPdf_other": "Download QR cards (PDF, {{count}} tables)",
+      "buildingPdf": "Preparing PDF…",
+      "urlWarning": {
+        "local": "These cards point to {{url}}, which guests' phones cannot open. Use them only for testing.",
+        "temporary": "These cards point to the temporary address {{url}}. Reprint them after the final domain is set up."
+      }
+    }
   },
   "notFound": {
     "title": "Page not found",
@@ -35,5 +291,162 @@
     "available": "A new version of IntroChat is ready.",
     "reload": "Update now",
     "dismiss": "Later"
+  },
+  "errors": {
+    "UNEXPECTED": "Something went wrong. Please try again.",
+    "NETWORK": "No connection. Check your internet and try again.",
+    "FORBIDDEN": "You don't have access to this.",
+    "RATE_LIMITED": "Too many attempts. Wait a minute and try again.",
+    "INVALID_CREDENTIALS": "Wrong email or password.",
+    "MFA_CODE_INVALID": "That code didn't work. Make sure your phone's time is correct and try the new code.",
+    "SLUG_TAKEN": "Another venue already uses this link name.",
+    "VALIDATION_FAILED": "Some details are not valid. Check the highlighted field.",
+    "VENUE_NOT_FOUND": "This QR code is not active.",
+    "TABLE_NOT_FOUND": "This table's QR code is no longer valid. Ask staff for a new one.",
+    "TABLE_LABEL_TAKEN": "A table with this name already exists here.",
+    "VENUE_HAS_NO_TABLES": "Add at least one active table before activating the venue.",
+    "SETTING_NOT_OVERRIDABLE": "This rule cannot be changed for a single venue.",
+    "SETTING_VALUE_INVALID": "That value is outside the allowed range.",
+    "INVALID_TIMEZONE": "Unknown time zone.",
+    "LOCATION_INVALID": "The phone sent an unusable location. Try again.",
+    "LOCATION_UNSUPPORTED": "This browser cannot share location. Open the page over https in Chrome or Safari.",
+    "LOCATION_PERMISSION_DENIED": "Location permission is off for this site. Allow it in the browser settings and try again.",
+    "LOCATION_UNAVAILABLE": "The phone could not find its location. Check that Location is on and try again.",
+    "LOCATION_TIMEOUT": "Finding the location took too long. Try again.",
+    "LOCATION_NO_READINGS": "No location readings arrived. Check Location is on and try again.",
+    "ADDRESS_SEARCH_FAILED": "Address search is not working right now. Drag the pin instead.",
+    "VENUE_CLOSED": "This venue has closed for today.",
+    "PHONE_INVALID": "Enter a 10-digit Indian mobile number.",
+    "PHONE_NOT_ALLOWED": "Only Indian (+91) mobile numbers can be used.",
+    "SIGNUP_NOT_ALLOWED": "This number can't be used on IntroChat.",
+    "BANNED": "This number can't be used on IntroChat.",
+    "SMS_DAILY_LIMIT": "We can't send more login codes today. Please try again tomorrow.",
+    "SMS_SEND_FAILED": "We couldn't send the code. Please try again in a minute.",
+    "OTP_INVALID": "That code is wrong or has expired. Check it, or ask for a new one.",
+    "NOT_A_GUEST": "This account is not a guest account.",
+    "CONSENT_VERSION_OUTDATED": "The notice has been updated. Please reload the page.",
+    "CONSENT_REQUIRED": "Please accept the notice first.",
+    "AGE_BLOCKED": "You must be 18 or older to use IntroChat.",
+    "BIRTH_YEAR_LOCKED": "Your year of birth can't be changed.",
+    "PROFILE_INVALID": "Some details are not valid. Please check them.",
+    "TAG_INVALID": "Use up to 24 letters, numbers or spaces.",
+    "TAGS_COUNT_INVALID": "Pick between 1 and 5 interests.",
+    "TAG_NOT_ALLOWED": "The marked interest is not allowed. Please remove it.",
+    "PROFILE_INCOMPLETE": "Please finish your profile first.",
+    "NOT_AT_VENUE": "You don't seem to be at the venue. Move inside and try again.",
+    "LOCATION_INACCURATE": "We couldn't get a precise location. Move near a window and try again.",
+    "KICKED_COOLDOWN": "You can't join this venue right now. Please try again later.",
+    "PAYMENT_REQUIRED": "This venue needs a payment to join, which is not available yet.",
+    "SESSION_NOT_ACTIVE": "Your session has ended.",
+    "CONTINUE_NOT_AVAILABLE": "You can continue only when your time is nearly up.",
+    "FEATURE_DISABLED": "This option isn't available here.",
+    "TARGET_NOT_AVAILABLE": "This person has just left.",
+    "NOT_SAME_VENUE": "This person is not at your venue.",
+    "BLOCKED": "You can't chat with this person.",
+    "REQUEST_EXISTS": "There is already a chat request between you two.",
+    "REQUEST_NOT_ALLOWED": "You can't send this person a request during this visit.",
+    "TOO_MANY_PENDING_REQUESTS": "Wait for some of your requests to be answered first.",
+    "REQUEST_NOT_FOUND": "This request no longer exists.",
+    "REQUEST_NOT_PENDING": "This request has expired or was already answered.",
+    "CONVERSATION_READ_ONLY": "This chat is read-only now.",
+    "CONVERSATION_NOT_FOUND": "This chat is no longer available.",
+    "MESSAGE_INVALID": "Messages must be 1 to 1000 characters."
+  },
+  "qrCard": {
+    "callToAction": "Scan to meet people here"
+  },
+  "common": {
+    "back": "Back"
+  },
+  "auth": {
+    "phoneTitle": "Log in with your phone",
+    "phoneLabel": "Mobile number",
+    "phoneHelp": "We'll send you a 6-digit code by SMS. Your number is never shown to anyone.",
+    "sendCode": "Send code",
+    "sending": "Sending…",
+    "codeTitle": "Enter the code",
+    "codeSentTo": "We sent a 6-digit code to {{phone}}.",
+    "codeLabel": "6-digit code",
+    "verify": "Log in",
+    "verifying": "Checking…",
+    "resendIn": "Resend code in {{time}}",
+    "resend": "Resend code",
+    "changeNumber": "Change number",
+    "logOut": "Log out",
+    "loggingOut": "Logging out…"
+  },
+  "onboarding": {
+    "loading": "Loading…",
+    "step": "Step {{current}} of {{total}}",
+    "saving": "Saving…",
+    "continue": "Continue",
+    "consent": {
+      "title": "Before you start",
+      "points": {
+        "phone": "Your phone number is used only to log in. It is never shown to anyone.",
+        "location": "We check your location only to confirm you are inside the restaurant. It is never shown to anyone.",
+        "anonymous": "Others see only your IntroChat name and your interests.",
+        "chats": "Your chats are deleted when your visit ends, unless you have a subscription.",
+        "adults": "IntroChat is only for people aged 18 and over."
+      },
+      "agree": "I am 18 or older and I agree to this.",
+      "continue": "Agree and continue"
+    },
+    "profile": {
+      "title": "About you",
+      "birthYear": "Year of birth",
+      "birthYearPlaceholder": "e.g. 1998",
+      "birthYearHelp": "You must be 18 or older. This can't be changed later.",
+      "birthYearInvalid": "Enter a 4-digit year, like 1998.",
+      "nickname": "Nickname (optional)",
+      "nicknameHelp": "Only you see this.",
+      "gender": "Gender (optional)",
+      "genderHelp": "Never shown to anyone.",
+      "genders": {
+        "male": "Male",
+        "female": "Female",
+        "other": "Other",
+        "prefer_not": "Prefer not to say"
+      }
+    },
+    "tags": {
+      "title": "What are you into?",
+      "help": "Pick 1 to {{max}} interests. People who share them see you first.",
+      "selected": "Your interests ({{count}}/{{max}})",
+      "inputLabel": "Add your own",
+      "placeholder": "e.g. garba, chess",
+      "add": "Add",
+      "remove": "Remove {{tag}}",
+      "suggested": "Popular",
+      "invalid": "Use up to 24 letters, numbers or spaces.",
+      "limitReached": "You can pick up to {{max}}. Remove one to add another.",
+      "save": "Save and finish"
+    },
+    "ready": {
+      "title": "You're {{handle}}",
+      "body": "This is the name people here will see. Your phone number stays private.",
+      "join": "Join the chat at {{venue}}",
+      "joining": "Joining…"
+    },
+    "underAge": {
+      "title": "Sorry, IntroChat is for adults only",
+      "body": "You must be 18 or older to use IntroChat."
+    },
+    "notAGuest": {
+      "title": "You're logged in as an admin",
+      "body": "This browser is logged in to the Admin Console. Log out to continue as a guest."
+    }
+  },
+  "push": {
+    "askTitle": "Get notified when someone replies",
+    "askBody": "Even when IntroChat is closed. Notifications never show what anyone wrote.",
+    "turnOn": "Turn on",
+    "notNow": "Not now",
+    "gotIt": "Got it",
+    "installTitle": "Get notified on your iPhone",
+    "installBody": "Notifications work once IntroChat is on your Home Screen:",
+    "installStep1": "Tap Share (the square with an arrow) at the bottom of Safari.",
+    "installStep2": "Choose \"Add to Home Screen\".",
+    "installStep3": "Open IntroChat from your Home Screen and scan your table again."
   }
 }

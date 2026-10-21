@@ -1,0 +1,407 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="robots" content="noindex" />
+    <title>IntroChat · GPS field test</title>
+    <style>
+      :root {
+        --teal: #0f766e;
+        --amber: #b45309;
+        --rose: #be123c;
+        --green: #047857;
+        --line: #e2e8f0;
+        --muted: #64748b;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        font: 16px/1.4 system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+        color: #0f172a;
+        background: #f8fafc;
+      }
+      main { max-width: 560px; margin: 0 auto; padding: 12px 14px 60px; }
+      h1 { font-size: 20px; margin: 4px 0 2px; }
+      h2 { font-size: 15px; margin: 0 0 8px; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); }
+      section { background: #fff; border: 1px solid var(--line); border-radius: 12px; padding: 12px; margin-top: 12px; }
+      label { display: block; font-size: 14px; color: var(--muted); margin-top: 8px; }
+      input[type=text], input[type=number], select {
+        width: 100%; font-size: 16px; padding: 9px 10px; border: 1px solid #cbd5e1; border-radius: 8px; background: #fff;
+      }
+      .row { display: flex; gap: 8px; align-items: end; }
+      .row > * { flex: 1; }
+      button {
+        font-size: 16px; font-weight: 600; padding: 11px 12px; border-radius: 10px; border: 0;
+        background: var(--teal); color: #fff; width: 100%; margin-top: 10px;
+      }
+      button.secondary { background: #fff; color: var(--teal); border: 1px solid var(--teal); }
+      button.danger { background: #fff; color: var(--rose); border: 1px solid var(--rose); }
+      button:disabled { background: #e2e8f0; color: #94a3b8; border-color: #e2e8f0; }
+      .labels { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; }
+      .labels button { margin: 0; padding: 9px 6px; font-size: 14px; background: #fff; color: #0f172a; border: 1px solid #cbd5e1; }
+      .labels button.on { background: var(--teal); color: #fff; border-color: var(--teal); }
+      .muted { color: var(--muted); font-size: 14px; }
+      .result { margin-top: 10px; padding: 10px; border-radius: 10px; font-weight: 600; }
+      .inside { background: #ecfdf5; color: var(--green); }
+      .outside { background: #fff1f2; color: var(--rose); }
+      .unknown { background: #fffbeb; color: var(--amber); }
+      .error { background: #fff1f2; color: var(--rose); }
+      table { width: 100%; border-collapse: collapse; font-size: 13px; }
+      th, td { text-align: left; padding: 6px 4px; border-bottom: 1px solid var(--line); }
+      .mono { font-family: ui-monospace, Consolas, monospace; font-size: 13px; }
+      .check { display: flex; align-items: center; gap: 8px; margin-top: 10px; color: #0f172a; }
+      .check input { width: 20px; height: 20px; }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>GPS field test</h1>
+      <p class="muted">
+        Measures how accurate phone location is inside a real restaurant, using the exact
+        inside / outside rule the app will use. Readings stay on this phone until you export them.
+      </p>
+
+      <section>
+        <h2>1 · This visit</h2>
+        <label for="restaurant">Restaurant</label>
+        <input id="restaurant" type="text" placeholder="e.g. Cafe on CG Road" autocomplete="off" />
+        <label for="device">This phone</label>
+        <input id="device" type="text" autocomplete="off" />
+        <label class="check"><input id="wifi" type="checkbox" checked /> Phone WiFi is switched ON (not connected is fine)</label>
+        <label class="check"><input id="precise" type="checkbox" checked /> Precise Location is ON (iPhone: Settings → Privacy → Location → Safari)</label>
+      </section>
+
+      <section>
+        <h2>2 · Restaurant pin</h2>
+        <p id="pinText" class="mono">No pin yet.</p>
+        <button id="setPin">Set pin here (stand in the middle · 30 s)</button>
+        <p id="pinProgress" class="muted"></p>
+        <div class="row">
+          <div><label for="pinLat">Pin latitude</label><input id="pinLat" type="number" step="any" inputmode="decimal" /></div>
+          <div><label for="pinLng">Pin longitude</label><input id="pinLng" type="number" step="any" inputmode="decimal" /></div>
+        </div>
+        <button id="usePin" class="secondary">Use these numbers as the pin</button>
+        <p class="muted">Second phone: type the first phone's pin here so both measure from the same point.</p>
+      </section>
+
+      <section>
+        <h2>3 · Rule settings (app defaults)</h2>
+        <div class="row">
+          <div><label for="radius">Radius m</label><input id="radius" type="number" value="40" min="5" /></div>
+          <div><label for="maxAcc">Max accuracy m</label><input id="maxAcc" type="number" value="60" min="5" /></div>
+          <div><label for="buffer">Buffer m</label><input id="buffer" type="number" value="15" min="0" /></div>
+        </div>
+      </section>
+
+      <section>
+        <h2>4 · Record a reading</h2>
+        <div class="labels" id="labels"></div>
+        <div class="row">
+          <div><label for="tableNo">Table number</label><input id="tableNo" type="number" min="1" value="1" inputmode="numeric" /></div>
+          <div><label for="other">Other label</label><input id="other" type="text" placeholder="e.g. upstairs" /></div>
+        </div>
+        <button id="record" disabled>Record reading</button>
+        <div id="result"></div>
+      </section>
+
+      <section>
+        <h2>5 · Readings (<span id="count">0</span>)</h2>
+        <button id="share" class="secondary">Share CSV (WhatsApp / email to yourself)</button>
+        <button id="download" class="secondary">Download CSV</button>
+        <button id="clear" class="danger">Delete all readings on this phone</button>
+        <div style="overflow-x:auto; margin-top: 10px">
+          <table>
+            <thead><tr><th>Label</th><th>±m</th><th>Dist m</th><th>Result</th><th>Time</th></tr></thead>
+            <tbody id="rows"></tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+
+    <script type="module">
+      // ---------------------------------------------------------------------
+      // The same rule as ARCHITECTURE_AND_DATA_FLOW.md §3.2 (evaluate_location).
+      // ---------------------------------------------------------------------
+      const EARTH_RADIUS_M = 6371000
+      const MAX_LOCATION_AGE_MS = 120000
+      const PIN_SECONDS = 30
+      const PIN_GOOD_ACCURACY_M = 30
+      const STORAGE_KEY = 'introchat.gpsFieldTest.v1'
+      const LABELS = ['Table', 'Counter', 'Washroom', 'Door inside', 'Door outside', 'Outside 10 m', 'Outside 30 m', 'Neighbour shop', 'Other']
+
+      function haversine(lat1, lng1, lat2, lng2) {
+        const toRad = (d) => (d * Math.PI) / 180
+        const dLat = toRad(lat2 - lat1)
+        const dLng = toRad(lng2 - lng1)
+        const a = Math.sin(dLat / 2) ** 2 + Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLng / 2) ** 2
+        return 2 * EARTH_RADIUS_M * Math.asin(Math.sqrt(a))
+      }
+
+      function evaluate(distance, accuracy, ageMs, rule) {
+        if (ageMs > MAX_LOCATION_AGE_MS) return 'unknown'
+        if (accuracy > rule.maxAcc) return 'unknown'
+        if (distance <= rule.radius + Math.min(accuracy, rule.buffer)) return 'inside'
+        if (distance - accuracy > rule.radius) return 'outside'
+        return 'unknown'
+      }
+
+      // ---------------------------------------------------------------------
+      // State, kept on this phone only. Storage can be blocked (private mode);
+      // then readings live only until the page is closed, and the page says so.
+      // ---------------------------------------------------------------------
+      const $ = (id) => document.getElementById(id)
+      let state = { pin: null, readings: [] }
+      let storageWorks = true
+
+      function load() {
+        try {
+          const raw = localStorage.getItem(STORAGE_KEY)
+          if (raw) state = JSON.parse(raw)
+        } catch (error) {
+          storageWorks = false
+          showResult('error', `This browser blocks saving: export before closing the page. (${error.message})`)
+        }
+      }
+
+      function save() {
+        if (!storageWorks) return
+        try {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(state))
+        } catch (error) {
+          storageWorks = false
+          showResult('error', `Could not save on this phone: export before closing the page. (${error.message})`)
+        }
+      }
+
+      function guessDevice() {
+        const ua = navigator.userAgent
+        if (/iPhone/.test(ua)) return 'iPhone'
+        if (/Android/.test(ua)) return 'Android'
+        return 'Other'
+      }
+
+      function rule() {
+        return { radius: Number($('radius').value), maxAcc: Number($('maxAcc').value), buffer: Number($('buffer').value) }
+      }
+
+      function showResult(kind, html) {
+        $('result').innerHTML = `<div class="result ${kind}">${html}</div>`
+      }
+
+      function geoErrorText(error) {
+        switch (error.code) {
+          case 1: return 'Location permission denied. Allow location for this page in browser settings, then try again.'
+          case 2: return 'Position unavailable. Move, check that Location is on, and try again.'
+          case 3: return 'Timed out waiting for a location. Try again.'
+          default: return `Location error: ${error.message}`
+        }
+      }
+
+      // ---------------------------------------------------------------------
+      // Pin: average of 30 s of readings, keeping only precise ones.
+      // ---------------------------------------------------------------------
+      function renderPin() {
+        $('pinText').textContent = state.pin
+          ? `${state.pin.lat.toFixed(6)}, ${state.pin.lng.toFixed(6)} · from ${state.pin.samples} readings · best ±${state.pin.bestAccuracy} m`
+          : 'No pin yet.'
+        if (state.pin) {
+          $('pinLat').value = state.pin.lat.toFixed(6)
+          $('pinLng').value = state.pin.lng.toFixed(6)
+        }
+        $('record').disabled = !state.pin
+      }
+
+      $('setPin').addEventListener('click', () => {
+        const fixes = []
+        $('setPin').disabled = true
+        const started = Date.now()
+        const watchId = navigator.geolocation.watchPosition(
+          (pos) => fixes.push({ lat: pos.coords.latitude, lng: pos.coords.longitude, acc: pos.coords.accuracy }),
+          (error) => showResult('error', geoErrorText(error)),
+          { enableHighAccuracy: true, maximumAge: 0, timeout: 20000 },
+        )
+        const tick = setInterval(() => {
+          const left = PIN_SECONDS - Math.floor((Date.now() - started) / 1000)
+          $('pinProgress').textContent = `Hold still… ${left}s · ${fixes.length} readings`
+          if (left > 0) return
+          clearInterval(tick)
+          navigator.geolocation.clearWatch(watchId)
+          $('setPin').disabled = false
+          if (fixes.length === 0) {
+            $('pinProgress').textContent = 'No readings received. Check location permission and try again.'
+            return
+          }
+          const good = fixes.filter((f) => f.acc <= PIN_GOOD_ACCURACY_M)
+          const used = good.length > 0 ? good : [...fixes].sort((a, b) => a.acc - b.acc).slice(0, 3)
+          state.pin = {
+            lat: used.reduce((s, f) => s + f.lat, 0) / used.length,
+            lng: used.reduce((s, f) => s + f.lng, 0) / used.length,
+            samples: used.length,
+            bestAccuracy: Math.round(Math.min(...used.map((f) => f.acc))),
+          }
+          $('pinProgress').textContent =
+            good.length > 0
+              ? `Pin set from ${good.length} readings within ±${PIN_GOOD_ACCURACY_M} m.`
+              : `No reading was within ±${PIN_GOOD_ACCURACY_M} m; used the best 3. This place may be hard for GPS — note it.`
+          save()
+          renderPin()
+        }, 500)
+      })
+
+      $('usePin').addEventListener('click', () => {
+        const lat = Number($('pinLat').value)
+        const lng = Number($('pinLng').value)
+        if (!Number.isFinite(lat) || !Number.isFinite(lng) || Math.abs(lat) > 90 || Math.abs(lng) > 180 || (lat === 0 && lng === 0)) {
+          showResult('error', 'Enter a valid latitude and longitude.')
+          return
+        }
+        state.pin = { lat, lng, samples: 0, bestAccuracy: 0 }
+        save()
+        renderPin()
+        showResult('inside', 'Pin set from the numbers you typed.')
+      })
+
+      // ---------------------------------------------------------------------
+      // Readings
+      // ---------------------------------------------------------------------
+      let selectedLabel = 'Table'
+      for (const name of LABELS) {
+        const b = document.createElement('button')
+        b.type = 'button'
+        b.textContent = name
+        b.addEventListener('click', () => {
+          selectedLabel = name
+          document.querySelectorAll('#labels button').forEach((x) => x.classList.toggle('on', x === b))
+        })
+        if (name === selectedLabel) b.classList.add('on')
+        $('labels').append(b)
+      }
+
+      function currentLabel() {
+        if (selectedLabel === 'Table') return `Table ${$('tableNo').value || '?'}`
+        if (selectedLabel === 'Other') return $('other').value.trim() || 'Other'
+        return selectedLabel
+      }
+
+      $('record').addEventListener('click', () => {
+        if (!state.pin) return
+        $('record').disabled = true
+        showResult('unknown', 'Getting location…')
+        navigator.geolocation.getCurrentPosition(
+          (pos) => {
+            const r = rule()
+            const distance = haversine(state.pin.lat, state.pin.lng, pos.coords.latitude, pos.coords.longitude)
+            const ageMs = Math.max(0, Date.now() - pos.timestamp)
+            const verdict = evaluate(distance, pos.coords.accuracy, ageMs, r)
+            const reading = {
+              restaurant: $('restaurant').value.trim(),
+              device: $('device').value.trim(),
+              wifiOn: $('wifi').checked,
+              preciseOn: $('precise').checked,
+              label: currentLabel(),
+              lat: pos.coords.latitude,
+              lng: pos.coords.longitude,
+              accuracy: Math.round(pos.coords.accuracy),
+              distance: Math.round(distance),
+              verdict,
+              radius: r.radius,
+              maxAcc: r.maxAcc,
+              buffer: r.buffer,
+              pinLat: state.pin.lat,
+              pinLng: state.pin.lng,
+              takenAt: new Date(pos.timestamp).toISOString(),
+              ageMs,
+              userAgent: navigator.userAgent,
+            }
+            state.readings.unshift(reading)
+            save()
+            renderReadings()
+            showResult(verdict, `${reading.label}: ${verdict.toUpperCase()} · ${reading.distance} m from pin · accuracy ±${reading.accuracy} m`)
+            if (selectedLabel === 'Table') $('tableNo').value = String(Number($('tableNo').value || 0) + 1)
+            $('record').disabled = false
+          },
+          (error) => {
+            showResult('error', geoErrorText(error))
+            $('record').disabled = false
+          },
+          { enableHighAccuracy: true, maximumAge: 0, timeout: 20000 },
+        )
+      })
+
+      function renderReadings() {
+        $('count').textContent = String(state.readings.length)
+        $('rows').innerHTML = ''
+        for (const r of state.readings) {
+          const tr = document.createElement('tr')
+          for (const value of [r.label, r.accuracy, r.distance, r.verdict, r.takenAt.slice(11, 19)]) {
+            const td = document.createElement('td')
+            td.textContent = String(value)
+            if (value === r.verdict) td.className = r.verdict
+            tr.append(td)
+          }
+          $('rows').append(tr)
+        }
+      }
+
+      // ---------------------------------------------------------------------
+      // Export
+      // ---------------------------------------------------------------------
+      const COLUMNS = ['restaurant', 'device', 'wifiOn', 'preciseOn', 'label', 'lat', 'lng', 'accuracy', 'distance', 'verdict', 'radius', 'maxAcc', 'buffer', 'pinLat', 'pinLng', 'takenAt', 'ageMs', 'userAgent']
+
+      function csv() {
+        const escape = (v) => `"${String(v).replaceAll('"', '""')}"`
+        const lines = [COLUMNS.join(',')]
+        for (const r of [...state.readings].reverse()) lines.push(COLUMNS.map((c) => escape(r[c])).join(','))
+        return lines.join('\n')
+      }
+
+      function fileName() {
+        const place = ($('restaurant').value.trim() || 'restaurant').replace(/[^\w-]+/g, '-').toLowerCase()
+        const device = ($('device').value.trim() || 'phone').replace(/[^\w-]+/g, '-').toLowerCase()
+        return `gps-${place}-${device}-${new Date().toISOString().slice(0, 10)}.csv`
+      }
+
+      $('download').addEventListener('click', () => {
+        const url = URL.createObjectURL(new Blob([csv()], { type: 'text/csv' }))
+        const a = document.createElement('a')
+        a.href = url
+        a.download = fileName()
+        a.click()
+        setTimeout(() => URL.revokeObjectURL(url), 1000)
+      })
+
+      $('share').addEventListener('click', async () => {
+        const file = new File([csv()], fileName(), { type: 'text/csv' })
+        if (!navigator.canShare || !navigator.canShare({ files: [file] })) {
+          showResult('unknown', 'Sharing files is not supported in this browser. Use Download CSV instead.')
+          return
+        }
+        try {
+          await navigator.share({ files: [file], title: fileName() })
+        } catch (error) {
+          // AbortError = the user closed the share sheet; anything else is a real failure.
+          if (error.name !== 'AbortError') showResult('error', `Sharing failed: ${error.message}. Use Download CSV instead.`)
+        }
+      })
+
+      $('clear').addEventListener('click', () => {
+        if (!confirm(`Delete all ${state.readings.length} readings and the pin from this phone? Export first if you need them.`)) return
+        state = { pin: null, readings: [] }
+        save()
+        renderPin()
+        renderReadings()
+        showResult('unknown', 'All readings deleted.')
+      })
+
+      // ---------------------------------------------------------------------
+      if (!('geolocation' in navigator) || !window.isSecureContext) {
+        showResult('error', 'Location needs HTTPS and a browser with location support. Open this page from its https:// address.')
+      }
+      $('device').value = guessDevice()
+      load()
+      renderPin()
+      renderReadings()
+    </script>
+  </body>
+</html>

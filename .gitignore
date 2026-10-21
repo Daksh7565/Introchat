@@ -11,11 +11,13 @@ coverage/
 playwright-report/
 test-results/
 
-# Environment files: only .env.example is committed. Real values (even public
-# VITE_* ones) differ per environment and live in Cloudflare Pages settings.
+# Environment files: only .env.example and .env.dev-deploy (public values of
+# the dev deployment: its address and environment name) are committed. Secrets
+# never live in any VITE_* file.
 .env
 .env.*
 !.env.example
+!.env.dev-deploy
 
 # Supabase CLI local state (project link, temp files). Never commit: it holds
 # the linked project ref and can hold access tokens.

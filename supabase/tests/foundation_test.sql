@@ -27,10 +27,23 @@ $$;
 select plan(20);
 
 -- app_settings -----------------------------------------------------------------
+-- The 36 settings seeded by 0001 are all present (later migrations add more,
+-- so this checks presence, not the total).
 select is(
-  (select count(*)::integer from public.app_settings),
+  (select count(*)::integer from public.app_settings where key in (
+    'PAYMENTS_ENABLED', 'SCAN_FEE_ENABLED', 'SUBSCRIPTION_ENABLED', 'SCAN_FEE_PAISE',
+    'SCAN_SESSION_MINUTES', 'CONTINUE_FEE_PAISE', 'CONTINUE_MINUTES', 'SUBSCRIPTION_PRICE_PAISE',
+    'SUBSCRIPTION_SCANS', 'SUBSCRIPTION_SESSION_MINUTES', 'FREE_SESSION_MINUTES',
+    'WARNING_BEFORE_MINUTES', 'FINAL_PROMPT_SECONDS', 'PAYMENT_GRACE_SECONDS',
+    'UNUSED_FEE_VALID_MINUTES', 'HEARTBEAT_INTERVAL_SECONDS', 'LOCATION_INTERVAL_SECONDS',
+    'OFFLINE_AFTER_SECONDS', 'AWAY_GRACE_SECONDS', 'GEOFENCE_RADIUS_M', 'MAX_ACCURACY_M',
+    'ACCURACY_BUFFER_M', 'MAX_LOCATION_AGE_SECONDS', 'MAX_SPEED_MPS', 'MIN_AGE',
+    'MAX_TAGS_PER_USER', 'CHAT_REQUEST_EXPIRY_MINUTES', 'MAX_PENDING_OUTGOING_REQUESTS',
+    'KICK_COOLDOWN_HOURS', 'REPORT_EVIDENCE_ENABLED', 'REPORT_EVIDENCE_MESSAGES',
+    'REPORT_EVIDENCE_RETENTION_DAYS', 'SMS_PROVIDER', 'SMS_DAILY_CAP', 'SMS_ALERT_AT',
+    'OTP_PER_PHONE_PER_HOUR')),
   36,
-  'all 36 V1 settings are seeded'
+  'all 36 settings from migration 0001 are present'
 );
 
 select is(

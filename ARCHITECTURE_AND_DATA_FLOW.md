@@ -122,7 +122,8 @@ No local Docker. Developers run the React app locally (`npm run dev`) against th
 - Sessions persist on the phone (Supabase refresh tokens), so a returning guest on the same phone does not need a new OTP.
 
 **Admins — email + password + TOTP MFA:**
-- Created only by another admin (no public sign-up; public email sign-up is disabled in Auth settings).
+- Created only by another admin, through the Admin API / dashboard. Public email sign-up is refused by the **before-user-created hook** (`before_user_created_hook`), not by the email sign-up switch: switching that off also disables email *sign-in* (found in M2). The hook does not run for Admin-API-created users, so admins are unaffected. The same hook refuses phone sign-ups that are not +91 mobiles or are banned.
+- Auth settings are code: `supabase/config.toml`, applied with `npx supabase config push` after `config pull` + `config diff`. Dev-only values (test phone numbers, the Send SMS hook URL) live in `[remotes.dev]`; secrets come from the git-ignored `supabase/.env`.
 - `is_admin()` = `EXISTS (admins where user_id = auth.uid() and is_active) AND auth.jwt()->>'aal' = 'aal2'`.
 
 ### 2.3 Settings resolution (the payment switches and all tunables)
@@ -183,7 +184,9 @@ Exceeding → `RATE_LIMITED` with `retry_after` seconds.
 navigator.geolocation.getCurrentPosition(onFix, onError, {
   enableHighAccuracy: true, timeout: 15000, maximumAge: 10000,
 });
-// reading = { lat, lng, accuracy_m, taken_at (position.timestamp) }
+// reading = { lat, lng, accuracy_m, age_s = (Date.now() - position.timestamp) / 1000 }
+// The age is measured on the phone, against the phone's own clock, so a phone
+// whose clock is wrong still reports a correct age (built in M1, migration 0002).
 ```
 
 - A reading is taken: on the landing page, right before `start_session`, **every `LOCATION_INTERVAL_SECONDS` (120)** while the page is visible, and immediately on `visibilitychange → visible`.
@@ -199,7 +202,7 @@ MAX = setting('MAX_ACCURACY_M', venue)           -- default 60
 BUF = setting('ACCURACY_BUFFER_M', venue)        -- default 15
 acc = reading.accuracy_m
 
-if reading.taken_at < now() - MAX_LOCATION_AGE_SECONDS (120)  → unknown
+if reading.age_s > MAX_LOCATION_AGE_SECONDS (120)             → unknown
 if acc > MAX                                                   → unknown
 if d <= R + min(acc, BUF)                                      → inside
 if d - acc > R                                                 → outside   (outside even at best)
@@ -250,10 +253,11 @@ sequenceDiagram
   participant DB as Postgres (RPC)
   P->>DB: venue_public(slug, qr_token)
   DB-->>P: name, logo, table_label, flags (payments on?, prices)
-  P->>P: language picker, "why location" screen
+  P->>P: language picker, "why location" card with a "Check my location" button
+  Note over P: the browser's permission prompt appears only after that tap;<br/>if permission was already granted, the check starts on its own
   P->>P: getCurrentPosition()
   P->>DB: location_check(slug, reading, device_id)
-  DB-->>P: inside | outside | unknown (+ distance band)
+  DB-->>P: inside | outside | unknown (verdict only: no distance, so the pin cannot be triangulated)
   P->>P: inside → "Continue" unlocks
 ```
 
@@ -287,7 +291,8 @@ sequenceDiagram
   P->>DB: my_profile()
 ```
 
-- `sms_hook_check`: platform ban on `phone_hash` → refuse (no SMS spent); per-phone 5/hour; global daily count ≥ `SMS_DAILY_CAP` → refuse with `SMS_DAILY_LIMIT` and alert admins.
+- `sms_hook_check` *(built, M2)*: not a +91 mobile → `PHONE_NOT_ALLOWED`; platform ban on `phone_hash` → `BANNED` (no SMS spent); per-phone `OTP_PER_PHONE_PER_HOUR` → `RATE_LIMITED`; daily count (IST day) ≥ `SMS_DAILY_CAP` → `SMS_DAILY_LIMIT` + `sms.cap_reached` audit row; `SMS_ALERT_AT` → `sms.cap_alert` audit row. Every attempt, allowed or refused, is a row in `sms_log` (never the code or number). Gateway outage → `SMS_SEND_FAILED`.
+- **Hook answers** must be HTTP 200 with `{"error": {...}}` for Supabase Auth to pass the code to the phone; any non-200 answer becomes a generic error (verified in M2). SMS codes are valid 300 s (`auth.sms.otp_expiry`; the platform default is 60 s).
 - `SMS_PROVIDER` setting: `phone_gateway` (V1) | `twilio` (later; then the hook is disabled and Supabase's built-in Twilio provider is used).
 - On first sign-in, trigger `on_auth_user_created` → insert `profiles(id = auth.users.id, phone_hash = hmac_sha256(vault_key, phone), handle = generate_handle())`. Admin (email) users get no profile.
 - Handle: `<Word>-<4 digits>` from a curated word list; retry up to 5 times on unique conflict.
@@ -354,6 +359,8 @@ Uniqueness: partial unique index `uq_sessions_one_live_per_user`. If two tabs ra
 Note: if switches are on and the guest has scan credits, a scan **always uses a credit** (subscribers don't see the ₹19 option).
 
 ### 4.6 Heartbeat & presence — `heartbeat(reading?, permission_state)`
+
+*Built (M3).* Every session function returns one shape, `session_state` (times, the rules the popups need, `server_now`). `my_session()` returns the live session or one ended in the last 30 minutes; `end_my_session()` is the guest's Leave / Log out. Until payments exist (M5), `start_session` refuses with `PAYMENT_REQUIRED` whenever the scan fee is on for the venue.
 
 Every `HEARTBEAT_INTERVAL_SECONDS` (30) while visible, and immediately on becoming visible / back online.
 
@@ -572,6 +579,8 @@ Not touched: payments, credit ledger, reports (evidence was copied at report tim
 - Triggers (only when the recipient is offline): chat request received, request accepted, new message, session warning, final prompt.
 - Postgres → `pg_net` → Edge Function `push-send` (VAPID, `web-push` library). 404/410 from the push service → delete that subscription.
 - Notification text never contains message content: "New message from Mango-4821", "Your time is almost up".
+- *Built (M4):* `notify()` queues the push through `queue_push()` → `pg_net` (sent only after commit) → `push-send`, which proves the caller with a shared secret generated in Vault (`push_send_secret`). "Offline" here means **the app is not on screen**: no heartbeat for 1.5 × `HEARTBEAT_INTERVAL_SECONDS` (waiting for the 90 s offline flag would miss messages right after the phone is locked). Text is in the recipient's `preferred_language`.
+- Per project: Edge Function secrets `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT` (the app's https address); setting `PUSH_FUNCTION_URL` (empty = push off); frontend `VITE_VAPID_PUBLIC_KEY`. Each project has its own key pair.
 
 ### 4.15 Block, report, kick, ban
 
@@ -765,7 +774,7 @@ Geofence radius / accuracy live in settings (global default + `venue_settings` o
 |---|---|---|
 | id | uuid | PK |
 | name | text | `uq`; normalised, 1..24 chars |
-| usage_count | integer | default 0 |
+| *(no usage_count)* | | Popularity is counted from `user_tags` when suggestions are asked for, so it can never drift from reality (decided in M2) |
 | is_blocked | boolean | default false |
 
 `user_tags(user_id → profiles cascade, tag_id → tags cascade)`, PK both; `ix_user_tags_tag (tag_id)`.
@@ -964,7 +973,7 @@ All channels are **private**. Authorization is an RLS policy on `realtime.messag
 | `conv:{conversation_id}` | Visible members with a live session | `typing` (client-to-client broadcast; nothing stored) |
 | `admin` | Admins (aal2) | `sms.cap_alert`, `report.new`, `spoof.flag` |
 
-- Server events are sent from SQL with `realtime.send(payload, event, topic, private => true)` inside the same functions that change the data.
+- Server events are sent from SQL with `realtime.send(payload, event, topic, private => true)` (wrapped as `notify()`) inside the same transaction that changes the data. *Built (M4):* session notices (`person.*`, `session.*`) come from one trigger on `sessions`, so every path that changes a session announces it; request and chat notices come from their functions. Clients treat every notice as "re-fetch", never as the data itself. `realtime.send` turns failures into warnings, so a notice can never roll back the change.
 - Each client opens **one websocket** and joins its channels on it.
 - On reconnect the app re-joins and re-fetches state (§4.9), so a missed broadcast only delays an update.
 
@@ -975,7 +984,7 @@ All channels are **private**. Authorization is an RLS policy on `realtime.messag
 | Job | Schedule | Does |
 |---|---|---|
 | `tick()` | every **10 s** | warnings · time up → final_prompt · final_prompt timeout → end · away > 3 min → end `left_venue` · no heartbeat > 90 s → `is_offline = true` + broadcast · chat requests past `expires_at` → expired |
-| `hourly_cleanup()` | hourly | report evidence past 30 days → null · conversations with no visible member → delete (safety net) · payments `created` > 24 h → failed · `rate_limits` older than 1 day → delete · `sms_log` older than 30 days → delete |
+| `hourly_cleanup()` | hourly | pg_cron run history older than 1 day → delete (the 10 s tick writes 8 640 rows a day) · report evidence past 30 days → null · conversations with no visible member → delete (safety net) · payments `created` > 24 h → failed · `rate_limits` older than 1 day → delete · `sms_log` older than 30 days → delete |
 | `daily_maintenance()` | 03:00 IST | reopen venues whose `closed_until` passed (no-op, just audit) · daily stats snapshot for the Console |
 
 - Each step selects due rows with `FOR UPDATE SKIP LOCKED LIMIT 200` and **re-checks the condition** before acting, so a row changed by a user in the same second is handled correctly.
@@ -1012,13 +1021,14 @@ All channels are **private**. Authorization is an RLS policy on `realtime.messag
 | BANNED | platform ban |
 | KICKED_COOLDOWN | venue ban, `details.until` |
 | CONSENT_REQUIRED | consent not given |
-| UNDER_AGE | under 18 |
+| AGE_BLOCKED | gave a birth year under MIN_AGE (recorded; replaces UNDER_AGE) |
 | PROFILE_INCOMPLETE | missing birth year / tags |
 | PAYMENT_REQUIRED | `details`: prices, subscription on/off |
 | PAYMENT_INVALID | signature check failed / wrong user / already used |
 | NO_CREDITS | continue with credit but balance 0 |
 | FEATURE_DISABLED | switch off |
-| SESSION_NOT_ACTIVE | no live session |
+| SESSION_NOT_ACTIVE | no session at all (a heartbeat after the end returns the ended state instead) |
+| CONTINUE_NOT_AVAILABLE | continue asked for before the warning |
 | SESSION_ENDED | `details.reason` |
 | NOT_SAME_VENUE | chat target at another venue |
 | REQUEST_EXISTS | pending request already exists |

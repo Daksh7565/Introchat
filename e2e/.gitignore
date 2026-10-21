@@ -1,0 +1,6 @@
+# Python virtual environment, test output, and the saved admin login
+.venv/
+__pycache__/
+.pytest_cache/
+test-results/
+.auth/

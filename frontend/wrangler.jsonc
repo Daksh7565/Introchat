@@ -1,0 +1,16 @@
+// Cloudflare hosting for the frontend: a Worker that only serves the built
+// files in dist/ (no server code). Cloudflare Pages is now part of Workers, and
+// `wrangler pages` hands off to this mechanism; configuring it directly keeps
+// every deploy identical. Static asset requests are free on Workers.
+//
+// Deploy (dev):  npm run deploy:dev   (builds with the dev address, then uploads)
+{
+  "name": "introchat-dev",
+  "compatibility_date": "2026-10-06",
+  "assets": {
+    "directory": "./dist",
+    // Every path (/v/<slug>/t/<token>, /admin, …) is a route of the single-page
+    // app: unknown paths get index.html, and the app's router decides.
+    "not_found_handling": "single-page-application",
+  },
+}

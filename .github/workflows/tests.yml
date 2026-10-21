@@ -1,0 +1,106 @@
+name: tests
+
+# Every pull request and every push to main runs the full frontend checks and
+# the pgTAP suite against the dev Supabase project. Deploys are not here:
+# Cloudflare Pages builds the frontend itself; database deploys arrive with
+# db-deploy.yml.
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: tests-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  frontend:
+    name: Frontend (typecheck, lint, format, unit tests, build)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: frontend/.node-version
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm run lint
+      - run: npm run format:check
+      - run: npm test
+      - run: npm run build
+
+  functions:
+    name: Edge Functions (type check, unit tests)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: frontend/.node-version
+      # Deno via npx, the same way developers run it (no separate install step).
+      # Each function has its own deno.json; the loop picks up new functions.
+      - name: Check and test every function
+        run: |
+          for dir in supabase/functions/*/; do
+            [ -f "$dir/deno.json" ] || continue
+            echo "::group::$dir"
+            npx --yes deno check --config "$dir/deno.json" "$dir/index.ts"
+            if ls "$dir"*.test.ts >/dev/null 2>&1; then
+              npx --yes deno test --config "$dir/deno.json" "$dir"
+            fi
+            echo "::endgroup::"
+          done
+
+  database:
+    name: Database (pgTAP on the dev project)
+    runs-on: ubuntu-latest
+    # One database run at a time: the suites roll back everything they create,
+    # but serialising keeps two runs from racing on the shared dev project.
+    concurrency:
+      group: pgtap-dev
+      cancel-in-progress: false
+    env:
+      # Repository secret: a Supabase personal access token. It is account-wide,
+      # so it lives only in GitHub secrets, never in the repo or a log.
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      # Repository variable (not secret): the dev project ref.
+      SUPABASE_DEV_PROJECT_REF: ${{ vars.SUPABASE_DEV_PROJECT_REF }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: frontend/.node-version
+          cache: npm
+          cache-dependency-path: package-lock.json
+      - name: Check configuration
+        # Fail with a clear message rather than a confusing CLI error later.
+        run: |
+          missing=0
+          if [ -z "$SUPABASE_ACCESS_TOKEN" ]; then echo "::error::Repository secret SUPABASE_ACCESS_TOKEN is not set"; missing=1; fi
+          if [ -z "$SUPABASE_DEV_PROJECT_REF" ]; then echo "::error::Repository variable SUPABASE_DEV_PROJECT_REF is not set"; missing=1; fi
+          exit $missing
+      # Root package.json pins the Supabase CLI version used everywhere.
+      - run: npm ci
+      - run: npx supabase link --project-ref "$SUPABASE_DEV_PROJECT_REF"
+      - name: Migrations in the repo are applied on dev
+        # A PR that adds a migration must push it to dev first; otherwise the
+        # tests below would run against the old schema and prove nothing.
+        # Passes only on an explicit "upToDate":true; any other output (pending
+        # migrations, or a CLI output change) fails loudly instead of passing.
+        run: |
+          npx supabase db push --dry-run 2>&1 | tee /tmp/dry-run.txt
+          if ! grep -q '"upToDate":true' /tmp/dry-run.txt; then
+            echo "::error::Dev is not up to date with this branch's migrations. Run: npx supabase db push"
+            exit 1
+          fi
+      # GitHub-hosted runners have Docker, which `supabase test db` uses to run pg_prove.
+      - run: npx supabase test db --linked

@@ -10,6 +10,10 @@ import './i18n'
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { AppProviders } from './app/AppProviders'
+import { initMonitoring, rootErrorHandlers } from './lib/monitoring'
+
+// First, so errors during the first render are reported too.
+initMonitoring()
 
 const rootElement = document.getElementById('root')
 if (!rootElement) {
@@ -18,7 +22,7 @@ if (!rootElement) {
   throw new Error('Root element #root not found in index.html')
 }
 
-createRoot(rootElement).render(
+createRoot(rootElement, rootErrorHandlers).render(
   <StrictMode>
     <AppProviders />
   </StrictMode>,

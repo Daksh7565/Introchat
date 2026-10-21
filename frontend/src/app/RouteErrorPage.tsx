@@ -1,18 +1,18 @@
 import { useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useRouteError } from 'react-router'
+import { reportError } from '../lib/monitoring'
 
 /**
  * Shown when rendering a route throws. The guest gets a translated message and
- * a reload button, never a stack trace. The error is logged once per error;
- * Sentry (M0 phase 5) will capture it from the same effect.
+ * a reload button, never a stack trace. The error is reported once per error.
  */
 export function RouteErrorPage() {
   const { t } = useTranslation()
   const error = useRouteError()
 
   useEffect(() => {
-    console.error('Route error', error)
+    reportError(error, 'route-error')
   }, [error])
 
   return (
