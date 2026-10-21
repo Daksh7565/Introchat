@@ -15,6 +15,7 @@ import {
   updateVenue,
   type VenueDetail,
   type VenueInput,
+  venueInputProblems,
 } from './api'
 import { LiveLocationTest } from './LiveLocationTest'
 import { PinEditor } from './PinEditor'
@@ -135,14 +136,21 @@ function DetailsPanel({ venue }: { venue: VenueDetail }) {
     city: venue.city ?? '',
   }
   const [details, setDetails] = useState(initial)
+  const [showProblems, setShowProblems] = useState(false)
+  const problems = venueInputProblems(details)
   const save = useMutation({ mutationFn: () => updateVenue(venue, details), onSuccess: refresh })
   const changed = JSON.stringify(details) !== JSON.stringify(initial)
 
   return (
     <form
+      noValidate
       className="flex flex-col gap-3"
       onSubmit={(event) => {
         event.preventDefault()
+        if (Object.keys(problems).length > 0) {
+          setShowProblems(true)
+          return
+        }
         save.mutate()
       }}
     >
@@ -151,6 +159,7 @@ function DetailsPanel({ venue }: { venue: VenueDetail }) {
         value={details}
         onChange={setDetails}
         invalidField={invalidField(save.error)}
+        problems={showProblems ? problems : undefined}
         slugLocked
       />
       <ErrorText error={save.error} />

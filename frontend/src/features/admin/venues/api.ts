@@ -294,6 +294,35 @@ export function invalidField(error: unknown): string | null {
   return null
 }
 
+// Same rule as ck_venues_slug: 3–40 characters, no hyphen at either end.
+const SLUG_PATTERN = /^[a-z0-9][a-z0-9-]{1,38}[a-z0-9]$/
+
+export type VenueField = keyof VenueInput
+export type VenueProblem =
+  | 'admin.venue.problems.nameRequired'
+  | 'admin.venue.problems.slugRequired'
+  | 'admin.venue.problems.slugFormat'
+  | 'admin.venue.problems.addressRequired'
+  | 'admin.venue.problems.cityRequired'
+export type VenueProblems = Partial<Record<VenueField, VenueProblem>>
+
+/**
+ * What is wrong with venue details before they are sent, as a translation key
+ * per field. Checks the values the server will store (it trims them and
+ * lower-cases the slug). Address and city are required here although the
+ * database allows them empty: every real venue has both.
+ */
+export function venueInputProblems(input: VenueInput): VenueProblems {
+  const problems: VenueProblems = {}
+  const slug = input.slug.trim().toLowerCase()
+  if (input.name.trim() === '') problems.name = 'admin.venue.problems.nameRequired'
+  if (slug === '') problems.slug = 'admin.venue.problems.slugRequired'
+  else if (!SLUG_PATTERN.test(slug)) problems.slug = 'admin.venue.problems.slugFormat'
+  if (input.address.trim() === '') problems.address = 'admin.venue.problems.addressRequired'
+  if (input.city.trim() === '') problems.city = 'admin.venue.problems.cityRequired'
+  return problems
+}
+
 /** "Café Mocha, CG Road" → "cafe-mocha-cg-road". Empty for names with no Latin letters. */
 export function slugFromName(name: string): string {
   return name

@@ -4,7 +4,44 @@ import { AppError } from '../../../lib/errors'
 // api.ts imports the Supabase client; these tests cover only its pure helpers.
 vi.mock('../../../lib/supabase', () => ({ supabase: {} }))
 
-const { effectiveIntegerSetting, invalidField, slugFromName } = await import('./api')
+const { effectiveIntegerSetting, invalidField, slugFromName, venueInputProblems } =
+  await import('./api')
+
+describe('venueInputProblems', () => {
+  const valid = {
+    name: 'Chai Spot',
+    slug: 'chai-spot',
+    type: 'cafe' as const,
+    address: 'Panjrapol Char Rasta',
+    city: 'Ahmedabad',
+  }
+
+  it('finds nothing wrong with complete details', () => {
+    expect(venueInputProblems(valid)).toEqual({})
+  })
+
+  it('treats blank-only fields as empty, as the server trims them', () => {
+    expect(
+      venueInputProblems({ ...valid, name: '  ', slug: ' ', address: '\t', city: '' }),
+    ).toEqual({
+      name: 'admin.venue.problems.nameRequired',
+      slug: 'admin.venue.problems.slugRequired',
+      address: 'admin.venue.problems.addressRequired',
+      city: 'admin.venue.problems.cityRequired',
+    })
+  })
+
+  it.each(['ab', '-chai', 'chai-', 'chai spot', 'chai_spot', 'a'.repeat(41)])(
+    'rejects the link name "%s"',
+    (slug) => {
+      expect(venueInputProblems({ ...valid, slug }).slug).toBe('admin.venue.problems.slugFormat')
+    },
+  )
+
+  it('accepts a link name the server will lower-case and trim', () => {
+    expect(venueInputProblems({ ...valid, slug: ' Chai-Spot-2 ' })).toEqual({})
+  })
+})
 
 describe('slugFromName', () => {
   it.each([

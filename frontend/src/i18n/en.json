@@ -198,7 +198,14 @@
         "cafe": "Café"
       },
       "address": "Address",
-      "city": "City"
+      "city": "City",
+      "problems": {
+        "nameRequired": "Enter the venue's name.",
+        "slugRequired": "Enter a link name.",
+        "slugFormat": "Use 3–40 lower-case letters, numbers and hyphens, with no hyphen at the start or end.",
+        "addressRequired": "Enter the address.",
+        "cityRequired": "Enter the city."
+      }
     },
     "pin": {
       "title": "Location pin",
@@ -216,6 +223,11 @@
       "fromPhoneDone_other": "Pin set from {{count}} precise readings (best ±{{accuracy}} m). Check it on the map, then save.",
       "fromPhoneImprecise": "No precise reading here (best ±{{accuracy}} m). Location may be weak at this venue: try near a window, and note it.",
       "outsideIndia": "The pin must be in India. Check that it is on the right place.",
+      "notPlaced": "Place the pin on the venue: search its address, tap the map, or set it from your phone there.",
+      "locating": "Finding this device's location…",
+      "useDevice": "Use this device's location",
+      "locatedPrecise": "Pin placed at this device's location (±{{accuracy}} m). Check it on the map and drag it if needed.",
+      "locatedRough": "This device's location is rough (±{{accuracy}} m), so the pin may be off. Drag it to the exact spot, or set it from a phone at the venue.",
       "save": "Save pin",
       "undo": "Undo"
     },

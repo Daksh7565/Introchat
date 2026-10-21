@@ -3,13 +3,21 @@ import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router'
 import { ErrorText } from '../../../components/ErrorText'
-import { adminKeys, createVenue, invalidField, slugFromName, type VenueInput } from './api'
+import {
+  adminKeys,
+  createVenue,
+  invalidField,
+  slugFromName,
+  type VenueInput,
+  venueInputProblems,
+} from './api'
 import { PinEditor } from './PinEditor'
 import type { MapPoint } from './PinMap'
 import { VenueDetailsFields } from './VenueDetailsFields'
 
-// Where the map opens for a new venue: central Ahmedabad, the pilot city. The
-// admin moves the pin to the real place before saving.
+// Where the map opens for a new venue (central Ahmedabad, the pilot city) until
+// this device's location arrives. It is only a starting view: the venue cannot
+// be created until the pin is placed, so no venue is saved here by accident.
 const START_PIN: MapPoint = { latitude: 23.0225, longitude: 72.5714 }
 // Global default radius, drawn until the venue exists and has its own settings.
 const DEFAULT_RADIUS_M = 40
@@ -27,10 +35,13 @@ export function VenueCreatePage() {
   })
   // The slug follows the name until the admin edits it themselves.
   const [slugEdited, setSlugEdited] = useState(false)
-  const [pin, setPin] = useState<MapPoint>(START_PIN)
+  const [pin, setPin] = useState<MapPoint | null>(null)
+  // Problems are shown from the first Create press on, then update as they are fixed.
+  const [showProblems, setShowProblems] = useState(false)
+  const problems = venueInputProblems(details)
 
   const create = useMutation({
-    mutationFn: () => createVenue(details, pin),
+    mutationFn: (placed: MapPoint) => createVenue(details, placed),
     onSuccess: async (venueId) => {
       await queryClient.invalidateQueries({ queryKey: adminKeys.venues })
       await navigate(`/admin/venues/${venueId}`)
@@ -39,16 +50,22 @@ export function VenueCreatePage() {
 
   return (
     <form
+      noValidate
       className="flex flex-col gap-6"
       onSubmit={(event) => {
         event.preventDefault()
-        create.mutate()
+        if (Object.keys(problems).length > 0 || pin === null) {
+          setShowProblems(true)
+          return
+        }
+        create.mutate(pin)
       }}
     >
       <h2 className="text-lg font-semibold">{t('admin.venues.new')}</h2>
       <VenueDetailsFields
         value={details}
         invalidField={invalidField(create.error)}
+        problems={showProblems ? problems : undefined}
         onSlugEdited={() => setSlugEdited(true)}
         onChange={(next) =>
           setDetails(
@@ -60,7 +77,16 @@ export function VenueCreatePage() {
       />
       <section className="flex flex-col gap-2">
         <h3 className="font-semibold">{t('admin.pin.title')}</h3>
-        <PinEditor pin={pin} onChange={setPin} radiusM={DEFAULT_RADIUS_M} />
+        {/* The radius circle appears once the pin is placed, not at the start view. */}
+        <PinEditor
+          pin={pin ?? START_PIN}
+          onChange={setPin}
+          radiusM={pin ? DEFAULT_RADIUS_M : null}
+          locateOnOpen
+        />
+        {showProblems && pin === null && (
+          <p className="text-sm text-rose-700">{t('admin.pin.notPlaced')}</p>
+        )}
         {invalidField(create.error) === 'pin' && (
           <p className="text-sm text-rose-700">{t('admin.pin.outsideIndia')}</p>
         )}
