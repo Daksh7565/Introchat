@@ -29,6 +29,15 @@ export interface SessionState {
   continueFreeMinutes: number
   heartbeatSeconds: number
   locationSeconds: number
+  /** The guest's scan credits; > 0 = subscriber (keeps chats, continues with a scan). */
+  scanCredits: number
+  continueFeePaise: number
+  continueMinutes: number
+  /** Payments and the subscription switch both on for this venue. */
+  subscriptionEnabled: boolean
+  subscriptionPricePaise: number
+  subscriptionScans: number
+  subscriptionSessionMinutes: number
   /**
    * Server clock minus phone clock, in ms. Every countdown adds this to
    * Date.now(), so a phone whose clock is minutes off still counts down to
@@ -48,8 +57,10 @@ const END_REASONS: readonly SessionEndReason[] = [
   'venue_closed',
 ]
 
-function required<T>(value: T | null, field: string): T {
-  if (value === null) throw new AppError('UNEXPECTED', { field })
+// A field the server must send. undefined counts as missing too: an older
+// server without a newer field must fail loudly here, not show NaN or blank.
+function required<T>(value: T | null | undefined, field: string): T {
+  if (value === null || value === undefined) throw new AppError('UNEXPECTED', { field })
   return value
 }
 
@@ -86,6 +97,16 @@ export function toSessionState(
     continueFreeMinutes: required(row.continue_free_minutes, 'continue_free_minutes'),
     heartbeatSeconds: required(row.heartbeat_seconds, 'heartbeat_seconds'),
     locationSeconds: required(row.location_seconds, 'location_seconds'),
+    scanCredits: required(row.scan_credits, 'scan_credits'),
+    continueFeePaise: required(row.continue_fee_paise, 'continue_fee_paise'),
+    continueMinutes: required(row.continue_minutes, 'continue_minutes'),
+    subscriptionEnabled: required(row.subscription_enabled, 'subscription_enabled'),
+    subscriptionPricePaise: required(row.subscription_price_paise, 'subscription_price_paise'),
+    subscriptionScans: required(row.subscription_scans, 'subscription_scans'),
+    subscriptionSessionMinutes: required(
+      row.subscription_session_minutes,
+      'subscription_session_minutes',
+    ),
     clockOffsetMs: Math.round(serverNowMs - (sentAtMs + receivedAtMs) / 2),
   }
 }
@@ -144,6 +165,13 @@ export async function sendHeartbeat(
 export async function continueFree(): Promise<SessionState> {
   const sentAt = Date.now()
   const row = unwrap(await supabase.rpc('continue_free'))
+  return toSessionState(row, sentAt, Date.now())
+}
+
+/** Continue using one scan credit (payments on, guest has credits). */
+export async function continueWithCredit(): Promise<SessionState> {
+  const sentAt = Date.now()
+  const row = unwrap(await supabase.rpc('continue_with_credit'))
   return toSessionState(row, sentAt, Date.now())
 }
 

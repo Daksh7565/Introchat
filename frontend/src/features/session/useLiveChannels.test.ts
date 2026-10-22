@@ -37,6 +37,10 @@ describe('onUserNotice', () => {
     ])
   })
 
+  it('a block either way drops that person from every list', () => {
+    expect(refetchedBy('person.removed')).toEqual(['people', 'requests', 'conversations'])
+  })
+
   it('session notices refresh the session', () => {
     expect(refetchedBy('session.ended')).toEqual(['live-session'])
   })

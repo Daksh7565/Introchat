@@ -8,6 +8,8 @@ tested from a laptop.
 |---|---|
 | `test_guest_entry.py` | Unknown QR, outside the venue, bad number and wrong code, first visit (consent → birth year → interests incl. Gujarati → join), reload keeps the session, Leave, returning guest skips onboarding, under-18 refused for good |
 | `test_chat.py` | Two phones: see each other, request → accept, notification offer, live message with emoji/Hindi/Gujarati, Seen, reply, one leaves → read-only |
+| `test_legal.py` | Privacy, terms, refunds and contact reachable from home and by direct link, in the chosen language |
+| `test_layout.py` | Every guest screen in English, Hindi and Gujarati at 360 and 320 px: no sideways scrolling, no text past its box or against its border. Needs `npm run dev` (uses the dev preview); saves screenshots to `layout-screenshots/` |
 | `test_admin.py` | New venue with the pin from the phone, 2 tables, QR PDF download, activate, on-site live test says INSIDE, a guest scans in, deactivate |
 
 Not covered here (need real devices): push notifications arriving on a locked
@@ -46,9 +48,29 @@ cd C:\Users\Dell\Desktop\Project\IntroChat\e2e
 - On a failure, a screenshot and a trace are saved under `e2e/test-results/`;
   open a trace with `.venv\Scripts\python -m playwright show-trace <file>.zip`.
 
+### Against the deployed-style build (Content-Security-Policy)
+
+`npm run dev` sends no security headers. To test the real policy, serve the
+built site the way Cloudflare does and point the tests at it. Any address the
+policy blocks fails the test that hit it.
+
+```powershell
+cd C:\Users\Dell\Desktop\Project\IntroChat\frontend
+npx vite build --mode dev-deploy
+npx wrangler dev --port 8787 --ip 127.0.0.1
+```
+
+In a second terminal:
+
+```powershell
+cd C:\Users\Dell\Desktop\Project\IntroChat\e2e
+$env:E2E_BASE_URL = 'http://127.0.0.1:8787'
+.venv\Scripts\python -m pytest -v
+```
+
 ## Data it touches (dev only)
 
-- Test numbers **9000000011–15** (code 123456): their accounts are deleted
+- Test numbers **9000000011–17** (code 123456): their accounts are deleted
   before and after every run.
 - A guest-test venue `zz-e2e-…`, created in the database and deleted after.
 - The admin test's venue cannot be deleted (audit-log rows must be kept), so it

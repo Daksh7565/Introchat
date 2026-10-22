@@ -127,7 +127,9 @@
     "leave": "Leave",
     "leaveConfirm": "Tap again to leave",
     "away": "You seem to be outside {{venue}}. Come back within {{time}} or your session will end.",
-    "offline": "No connection. Your session continues; reconnect to keep chatting."
+    "offline": "No connection. Your session continues; reconnect to keep chatting.",
+    "scansLeft_one": "{{count}} scan",
+    "scansLeft_other": "{{count}} scans"
   },
   "ended": {
     "title": "Your session has ended",
@@ -136,159 +138,11 @@
       "left_venue": "You left the restaurant.",
       "user_logout": "You logged out.",
       "kicked": "The restaurant ended your session.",
-      "banned": "Your account has been blocked.",
+      "banned": "Your account has been banned.",
       "venue_closed": "The restaurant has closed for today."
     },
     "chatsDeleted": "Your chats from this visit have been deleted.",
     "scanAgain": "Scan the QR code on your table to start again."
-  },
-  "admin": {
-    "title": "Admin Console",
-    "loading": "Checking your access…",
-    "retry": "Try again",
-    "auth": {
-      "title": "Admin sign in",
-      "email": "Email",
-      "password": "Password",
-      "signIn": "Sign in",
-      "signingIn": "Signing in…",
-      "signOut": "Sign out"
-    },
-    "mfa": {
-      "setupTitle": "Set up 2-step verification",
-      "setupBody": "Admin access needs a code from an authenticator app (Google Authenticator, Microsoft Authenticator…) every time you sign in.",
-      "start": "Set up authenticator",
-      "starting": "Preparing…",
-      "scan": "Scan this QR code with your authenticator app, then enter the 6-digit code it shows.",
-      "manualKey": "Can't scan? Enter this key:",
-      "codeLabel": "6-digit code",
-      "verify": "Verify",
-      "verifying": "Checking…",
-      "verifyTitle": "Enter your verification code",
-      "verifyBody": "Open your authenticator app and enter the 6-digit code for IntroChat."
-    },
-    "notAdmin": {
-      "title": "No admin access",
-      "body": "{{email}} is not an IntroChat admin. Ask an existing admin to give you access."
-    },
-    "home": {
-      "signedInAs": "Signed in as {{email}}",
-      "venuesNext": "Venue and table management arrives in the next update."
-    },
-    "saving": "Saving…",
-    "venues": {
-      "title": "Venues",
-      "new": "New venue",
-      "create": "Create venue",
-      "empty": "No venues yet. Create the first one.",
-      "active": "Active",
-      "inactive": "Inactive",
-      "tables_one": "{{count}} active table",
-      "tables_other": "{{count}} active tables"
-    },
-    "venue": {
-      "detailsTitle": "Details",
-      "name": "Name",
-      "slug": "Link name",
-      "slugHelp": "Lower-case letters, numbers and hyphens. Part of every QR link of this venue.",
-      "slugLocked": "Fixed: it is inside every printed QR card of this venue.",
-      "type": "Type",
-      "types": {
-        "restaurant": "Restaurant",
-        "cafe": "Café"
-      },
-      "address": "Address",
-      "city": "City",
-      "problems": {
-        "nameRequired": "Enter the venue's name.",
-        "slugRequired": "Enter a link name.",
-        "slugFormat": "Use 3–40 lower-case letters, numbers and hyphens, with no hyphen at the start or end.",
-        "addressRequired": "Enter the address.",
-        "cityRequired": "Enter the city."
-      }
-    },
-    "pin": {
-      "title": "Location pin",
-      "searchLabel": "Search address",
-      "searchPlaceholder": "Search an address or place",
-      "search": "Search",
-      "noResults": "No places found. Try a shorter search, or drag the pin.",
-      "coordinates": "Pin: {{latitude}}, {{longitude}}",
-      "dragHint": "Drag the pin or tap the map to move it.",
-      "fromPhoneHelp": "At the venue: stand in the middle of the seating area and keep the phone still.",
-      "fromPhone": "Set pin from my phone here (30 s)",
-      "collecting_one": "Hold still… {{seconds}}s · {{count}} reading",
-      "collecting_other": "Hold still… {{seconds}}s · {{count}} readings",
-      "fromPhoneDone_one": "Pin set from {{count}} precise reading (best ±{{accuracy}} m). Check it on the map, then save.",
-      "fromPhoneDone_other": "Pin set from {{count}} precise readings (best ±{{accuracy}} m). Check it on the map, then save.",
-      "fromPhoneImprecise": "No precise reading here (best ±{{accuracy}} m). Location may be weak at this venue: try near a window, and note it.",
-      "outsideIndia": "The pin must be in India. Check that it is on the right place.",
-      "notPlaced": "Place the pin on the venue: search its address, tap the map, or set it from your phone there.",
-      "locating": "Finding this device's location…",
-      "useDevice": "Use this device's location",
-      "locatedPrecise": "Pin placed at this device's location (±{{accuracy}} m). Check it on the map and drag it if needed.",
-      "locatedRough": "This device's location is rough (±{{accuracy}} m), so the pin may be off. Drag it to the exact spot, or set it from a phone at the venue.",
-      "save": "Save pin",
-      "undo": "Undo"
-    },
-    "test": {
-      "title": "On-site test",
-      "help": "Walk around with this phone: to each table, the door and outside. You see live what a guest standing here would get.",
-      "start": "Start live test",
-      "stop": "Stop test",
-      "states": {
-        "inside": "INSIDE: a guest here can join",
-        "outside": "OUTSIDE: a guest here is refused",
-        "unknown": "UNKNOWN: location not precise enough here"
-      },
-      "numbers": "{{distance}} m from pin · accuracy ±{{accuracy}} m · radius {{radius}} m · max accuracy {{maxAccuracy}} m",
-      "live": "Updating as you move…"
-    },
-    "settings": {
-      "title": "Rules for this venue",
-      "global": "Default: {{value}}",
-      "range": "allowed {{min}}–{{max}}",
-      "useGlobal": "Use default",
-      "on": "On",
-      "off": "Off",
-      "save": "Save",
-      "clear": "Use default"
-    },
-    "status": {
-      "title": "Status",
-      "activeHelp": "Active: guests can scan this venue's QR codes.",
-      "inactiveHelp": "Inactive: QR codes show \"not active\". Add tables and check the pin, then activate.",
-      "activate": "Activate venue",
-      "deactivate": "Deactivate venue"
-    },
-    "tables": {
-      "title": "Tables and QR cards",
-      "empty": "No tables yet.",
-      "addTitle": "Add tables",
-      "fields": {
-        "prefix": "Prefix",
-        "from": "From",
-        "to": "To",
-        "pad": "Digits"
-      },
-      "preview_one": "{{count}} table: {{first}}",
-      "preview_other": "{{count}} tables: {{first}} … {{last}}",
-      "invalidRange": "Enter a range of 1 to {{max}} tables.",
-      "add_one": "Add {{count}} table",
-      "add_other": "Add {{count}} tables",
-      "label": "Table name",
-      "active": "Active",
-      "card": "QR card",
-      "regenerate": "New QR",
-      "regenerateConfirm": "Make a new QR for {{label}}? Its printed card stops working immediately and must be replaced.",
-      "downloadPdf_one": "Download QR cards (PDF, {{count}} table)",
-      "downloadPdf_other": "Download QR cards (PDF, {{count}} tables)",
-      "buildingPdf": "Preparing PDF…",
-      "urlWarning": {
-        "local": "These cards point to {{url}}, which guests' phones cannot open. Use them only for testing.",
-        "temporary": "These cards point to the temporary address {{url}}. Reprint them after the final domain is set up."
-      }
-    }
   },
   "notFound": {
     "title": "Page not found",
@@ -348,7 +202,7 @@
     "NOT_AT_VENUE": "You don't seem to be at the venue. Move inside and try again.",
     "LOCATION_INACCURATE": "We couldn't get a precise location. Move near a window and try again.",
     "KICKED_COOLDOWN": "You can't join this venue right now. Please try again later.",
-    "PAYMENT_REQUIRED": "This venue needs a payment to join, which is not available yet.",
+    "PAYMENT_REQUIRED": "Entering this venue needs a payment. Please try again.",
     "SESSION_NOT_ACTIVE": "Your session has ended.",
     "CONTINUE_NOT_AVAILABLE": "You can continue only when your time is nearly up.",
     "FEATURE_DISABLED": "This option isn't available here.",
@@ -362,7 +216,35 @@
     "REQUEST_NOT_PENDING": "This request has expired or was already answered.",
     "CONVERSATION_READ_ONLY": "This chat is read-only now.",
     "CONVERSATION_NOT_FOUND": "This chat is no longer available.",
-    "MESSAGE_INVALID": "Messages must be 1 to 1000 characters."
+    "MESSAGE_INVALID": "Messages must be 1 to 1000 characters.",
+    "NO_CREDITS": "You have no scans left.",
+    "PAYMENT_NOT_NEEDED": "No payment is needed for this.",
+    "PAYMENT_INVALID": "We couldn't confirm this payment. If money was taken, it is refunded automatically or by our team.",
+    "PAYMENT_NOT_FOUND": "This payment could not be found.",
+    "PAYMENT_PROVIDER_UNAVAILABLE": "Payments are not working right now. Please try again in a minute.",
+    "PAYMENTS_NOT_CONFIGURED": "Payments are not set up yet.",
+    "PAYMENT_CANCELLED": "Payment cancelled.",
+    "PAYMENT_CONFIRMING": "We're confirming your payment. Wait a moment, then try again.",
+    "PAYMENT_NOT_REFUNDABLE": "Only a paid payment can be refunded, once.",
+    "NOT_SIGNED_IN": "Please log in again.",
+    "SETTING_NOT_EDITABLE": "This setting changes only with an app update.",
+    "UNKNOWN_SETTING": "Unknown setting.",
+    "REPORT_NOT_FOUND": "This report no longer exists.",
+    "REPORT_ALREADY_RESOLVED": "Another admin already handled this report.",
+    "BAN_NOT_FOUND": "This ban was already lifted.",
+    "TAG_NOT_FOUND": "That tag or word does not exist.",
+    "VENUE_NOT_CLOSED": "This venue is not closed.",
+    "ADMIN_LOGIN_NOT_FOUND": "No email login with that address. Create it in the Supabase dashboard first.",
+    "ADMIN_EXISTS": "Already an admin.",
+    "ADMIN_SELF": "You can't deactivate yourself.",
+    "ADMIN_NOT_FOUND": "No such admin.",
+    "LAST_ADMIN": "At least one admin must stay active.",
+    "DELETION_NOT_REQUESTED": "There is no deletion request to cancel.",
+    "DELETION_NOT_PENDING": "This request was already handled.",
+    "PASSWORD_TOO_SHORT": "The password is too short.",
+    "PASSWORD_MISMATCH": "The two passwords are not the same.",
+    "PASSWORD_WEAK": "That password is too weak. Choose a longer one.",
+    "PASSWORD_SAME": "That is your current password."
   },
   "qrCard": {
     "callToAction": "Scan to meet people here"
@@ -400,6 +282,11 @@
         "anonymous": "Others see only your IntroChat name and your interests.",
         "chats": "Your chats are deleted when your visit ends, unless you have a subscription.",
         "adults": "IntroChat is only for people aged 18 and over."
+      },
+      "policies": {
+        "lead": "Full details:",
+        "privacy": "Privacy policy",
+        "terms": "Terms of use"
       },
       "agree": "I am 18 or older and I agree to this.",
       "continue": "Agree and continue"
@@ -459,6 +346,81 @@
     "installBody": "Notifications work once IntroChat is on your Home Screen:",
     "installStep1": "Tap Share (the square with an arrow) at the bottom of Safari.",
     "installStep2": "Choose \"Add to Home Screen\".",
-    "installStep3": "Open IntroChat from your Home Screen and scan your table again."
+    "installStep3": "Open IntroChat from your Home Screen and scan your table again.",
+    "notifications": {
+      "requestReceived": {
+        "title": "{{handle}} wants to chat",
+        "body": "Open IntroChat to reply."
+      },
+      "requestAccepted": {
+        "title": "{{handle}} accepted your request",
+        "body": "Say hello!"
+      },
+      "chatMessage": {
+        "title": "New message from {{handle}}",
+        "body": "Open IntroChat to read it."
+      },
+      "sessionWarning": {
+        "title": "Your time is almost up",
+        "body": "Open IntroChat to keep chatting."
+      },
+      "sessionFinalPrompt": {
+        "title": "Your time is up",
+        "body": "Open IntroChat in the next 2 minutes to continue."
+      }
+    }
+  },
+  "payments": {
+    "paying": "Opening payment…",
+    "purposes": {
+      "scan_fee": "Entry at {{venue}} · {{price}}",
+      "continue": "More time at {{venue}} · {{price}}",
+      "subscription": "IntroChat subscription · {{price}}"
+    },
+    "entry": {
+      "title": "Join {{venue}}",
+      "body": "Entry here is paid. Choose one:",
+      "scanFee_one": "{{price}} · {{count}} minute",
+      "scanFee_other": "{{price}} · {{count}} minutes",
+      "subscription_one": "{{price}} · {{count}} scan",
+      "subscription_other": "{{price}} · {{count}} scans",
+      "subscriptionHelp": "2 hours per scan, at any IntroChat restaurant. Your chats are kept while you have scans.",
+      "secure": "Paid securely through Razorpay (UPI, cards, wallets). IntroChat never sees your card or UPI details."
+    }
+  },
+  "safety": {
+    "blockTitle": "Block {{handle}}?",
+    "blockBody": "You won't see each other here or anywhere again, and your chat is deleted for both of you. This can't be undone.",
+    "reportTitle": "Report {{handle}}",
+    "reasonLabel": "What happened?",
+    "reasons": {
+      "harassment": "Harassment or threats",
+      "spam": "Spam or selling",
+      "inappropriate": "Inappropriate name, interests or messages",
+      "other": "Something else"
+    },
+    "noteLabel": "Anything we should know? (optional)",
+    "reportBody": "Our team will see your recent chat with them. They are also blocked: you won't see each other again.",
+    "sending": "Sending…",
+    "confirmBlock": "Block",
+    "confirmReport": "Report and block",
+    "cancel": "Cancel",
+    "blocked": "Blocked. You won't see each other again.",
+    "reported": "Thank you. Our team will review it, and you won't see each other again."
+  },
+  "account": {
+    "delete": "Delete my account",
+    "confirmTitle": "Delete your IntroChat account?",
+    "confirmBody": "Your profile, interests, chats and any unused scans are deleted within 30 days. Payment records are kept for accounting, without your name. You can cancel until then.",
+    "confirm": "Ask to delete",
+    "pending": "You asked to delete your account on {{date}}. It will be done within 30 days.",
+    "cancel": "Cancel the request"
+  },
+  "legalLinks": {
+    "label": "Policies",
+    "privacy": "Privacy",
+    "terms": "Terms",
+    "refunds": "Refunds",
+    "contact": "Contact"
   }
 }

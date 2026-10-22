@@ -5,18 +5,10 @@ import type { ChatMessage, ConversationSummary } from '../people/types'
 export const CONVERSATIONS_KEY = ['conversations'] as const
 export const messagesKey = (conversationId: string) => ['messages', conversationId] as const
 
-// Declared here: generated types mark last_message / last_message_at non-null.
-interface ConversationRow {
-  conversation_id: string
-  partner_handle: string
-  last_message: string | null
-  last_message_at: string | null
-  unread: number
-  can_send: boolean
-}
-
 export async function getConversations(): Promise<ConversationSummary[]> {
-  const rows = unwrap(await supabase.rpc('get_conversations')) as ConversationRow[]
+  // Generated types mark every column non-null; last_message and
+  // last_message_at are really NULL before the first message.
+  const rows = unwrap(await supabase.rpc('get_conversations'))
   return rows.map((row) => ({
     id: row.conversation_id,
     partnerHandle: row.partner_handle,

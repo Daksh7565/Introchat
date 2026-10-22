@@ -8,6 +8,8 @@ interface PeopleListViewProps {
   onSendRequest: (sessionId: string) => void
   onAcceptRequest: (sessionId: string) => void
   onOpenChat: (sessionId: string) => void
+  onReport: (sessionId: string) => void
+  onBlock: (sessionId: string) => void
 }
 
 export function PeopleListView({ people, ...actions }: PeopleListViewProps) {

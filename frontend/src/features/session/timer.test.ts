@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest'
+import { sessionStateFixture, sessionStateRow } from '../../test/sessionState'
 import { type SessionState, toSessionState } from './api'
 import { awaySecondsLeft, timerAt } from './timer'
 
@@ -6,25 +7,7 @@ const BASE = Date.parse('2026-10-13T12:00:00Z')
 const at = (secondsFromBase: number) => new Date(BASE + secondsFromBase * 1000)
 
 // A 60-minute session that started at BASE; warning 15 minutes before the end.
-const STATE: SessionState = {
-  sessionId: 's1',
-  status: 'active',
-  endReason: null,
-  venueId: 'v1',
-  venueName: 'Cafe One',
-  tableLabel: 'T1',
-  expiresAt: at(3600),
-  warningAt: at(2700),
-  finalDeadlineAt: null,
-  finalPromptSeconds: 120,
-  awaySince: null,
-  awayGraceSeconds: 180,
-  paymentsEnabled: false,
-  continueFreeMinutes: 60,
-  heartbeatSeconds: 30,
-  locationSeconds: 120,
-  clockOffsetMs: 0,
-}
+const STATE: SessionState = sessionStateFixture(BASE)
 
 describe('timerAt', () => {
   it('counts down to the end of the block', () => {
@@ -76,27 +59,8 @@ describe('awaySecondsLeft', () => {
 })
 
 describe('toSessionState', () => {
-  const ROW = {
-    session_id: 's1',
-    status: 'active',
-    end_reason: null,
-    kind: 'free',
-    venue_name: 'Cafe One',
-    table_label: 'T1',
-    started_at: at(0).toISOString(),
-    expires_at: at(3600).toISOString(),
-    warning_at: at(2700).toISOString(),
-    final_deadline_at: null,
-    final_prompt_seconds: 120,
-    away_since: null,
-    away_grace_seconds: 180,
-    payments_enabled: false,
-    continue_free_minutes: 60,
-    heartbeat_seconds: 30,
-    location_seconds: 120,
-    server_now: at(10).toISOString(),
-    venue_id: 'v1',
-  }
+  // The server answered at BASE+10 s.
+  const ROW = sessionStateRow(BASE, { server_now: at(10).toISOString() })
 
   it('estimates the clock offset from the middle of the round trip', () => {
     // Phone sent at BASE+0 and got the answer at BASE+2 s: answer made ~BASE+1 s

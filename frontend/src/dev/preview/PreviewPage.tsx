@@ -11,13 +11,20 @@ import { ConversationListView } from '../../features/chat/ConversationListView'
 import { GuestHomeView, type HomeTab } from '../../features/home/GuestHomeView'
 import { type LocationStatus, VenueLandingView } from '../../features/landing/VenueLandingView'
 import { ConsentStep } from '../../features/onboarding/ConsentStep'
+import {
+  AccountDeletionView,
+  type DeletionState,
+} from '../../features/onboarding/AccountDeletionView'
 import { NotAGuestView, ReadyView, UnderAgeView } from '../../features/onboarding/EndViews'
 import { ProfileStep } from '../../features/onboarding/ProfileStep'
 import { STARTER_TAGS } from '../../features/onboarding/rules'
 import { TagsStep } from '../../features/onboarding/TagsStep'
+import { EntryPaymentView } from '../../features/payments/EntryPaymentView'
 import { PeopleListView } from '../../features/people/PeopleListView'
 import type { ChatMessage, ConversationSummary, Person } from '../../features/people/types'
 import { RequestListView } from '../../features/requests/RequestListView'
+import { SafetyDialog } from '../../features/safety/SafetyDialog'
+import { PushPromptView } from '../../features/session/PushPromptView'
 import { SessionEndedView } from '../../features/session/SessionEndedView'
 import { SessionPopup } from '../../features/session/SessionPopup'
 import { TimerChip } from '../../features/session/TimerChip'
@@ -31,7 +38,19 @@ import {
   previewRequests,
 } from './fixtures'
 
-type Screen = 'landing' | 'login' | 'onboarding' | 'home' | 'chat' | 'warning' | 'final' | 'ended'
+type Screen =
+  | 'landing'
+  | 'login'
+  | 'onboarding'
+  | 'home'
+  | 'chat'
+  | 'warning'
+  | 'final'
+  | 'ended'
+  | 'payment'
+  | 'safety'
+  | 'account'
+  | 'push'
 type LoginStep = 'phone' | 'code'
 const LOGIN_STEPS: LoginStep[] = ['phone', 'code']
 type OnboardingScreen = 'consent' | 'profile' | 'tags' | 'ready' | 'under_age' | 'admin'
@@ -55,7 +74,16 @@ const SCREENS: { id: Screen; label: string }[] = [
   { id: 'warning', label: '15-min warning' },
   { id: 'final', label: 'Time up' },
   { id: 'ended', label: 'Ended' },
+  { id: 'payment', label: 'Pay to enter' },
+  { id: 'safety', label: 'Report / block' },
+  { id: 'account', label: 'Delete account' },
+  { id: 'push', label: 'Notifications' },
 ]
+
+const ENTRY_OPTIONS = ['entry and subscription', 'entry only'] as const
+const SAFETY_MODES = ['report', 'block'] as const
+const DELETION_STATES = ['idle', 'confirming', 'pending'] as const
+const PUSH_VARIANTS = ['ask', 'needs_install'] as const
 
 const LOCATION_STATES: LocationStatus[] = [
   'idle',
@@ -116,6 +144,11 @@ export function PreviewPage() {
   const [codeSentAt, setCodeSentAt] = useState(() => Date.now())
   const [onboarding, setOnboarding] = useState<OnboardingScreen>('consent')
   const [myTags, setMyTags] = useState<string[]>(['music', 'garba'])
+  const [entryOptions, setEntryOptions] =
+    useState<(typeof ENTRY_OPTIONS)[number]>('entry and subscription')
+  const [safetyMode, setSafetyMode] = useState<(typeof SAFETY_MODES)[number]>('report')
+  const [deletion, setDeletion] = useState<(typeof DELETION_STATES)[number]>('idle')
+  const [pushVariant, setPushVariant] = useState<(typeof PUSH_VARIANTS)[number]>('ask')
   // Desktop opens a chat in the right-hand pane; phones open it as its own screen.
   const isDesktop = useMediaQuery(DESKTOP_QUERY)
 
@@ -219,10 +252,15 @@ export function PreviewPage() {
       />
     ) : null
   const showHome = screen === 'home' || (screen === 'chat' && isDesktop)
+  const deletionState: DeletionState =
+    deletion === 'pending' ? { kind: 'pending', since: now } : { kind: deletion }
 
   return (
     <div className="flex flex-1 flex-col gap-4">
-      <div className="rounded-xl border border-dashed border-amber-300 bg-amber-50 px-4 py-2 text-xs text-amber-900">
+      <div
+        data-preview-controls
+        className="rounded-xl border border-dashed border-amber-300 bg-amber-50 px-4 py-2 text-xs text-amber-900"
+      >
         <p className="font-semibold">DEV PREVIEW · sample data · not in production builds</p>
         <div className="mt-2 flex flex-wrap gap-1.5">
           {SCREENS.map((s) => (
@@ -274,6 +312,38 @@ export function PreviewPage() {
             value={endReason}
             values={END_REASONS}
             onChange={setEndReason}
+          />
+        )}
+        {screen === 'payment' && (
+          <HarnessChoice
+            label="Options"
+            value={entryOptions}
+            values={ENTRY_OPTIONS}
+            onChange={setEntryOptions}
+          />
+        )}
+        {screen === 'safety' && (
+          <HarnessChoice
+            label="Dialog"
+            value={safetyMode}
+            values={SAFETY_MODES}
+            onChange={setSafetyMode}
+          />
+        )}
+        {screen === 'account' && (
+          <HarnessChoice
+            label="State"
+            value={deletion}
+            values={DELETION_STATES}
+            onChange={setDeletion}
+          />
+        )}
+        {screen === 'push' && (
+          <HarnessChoice
+            label="Phone"
+            value={pushVariant}
+            values={PUSH_VARIANTS}
+            onChange={setPushVariant}
           />
         )}
         {note && <p className="mt-2">→ {note}</p>}
@@ -396,6 +466,8 @@ export function PreviewPage() {
                 setRequests((list) => list.filter((r) => r.handle !== handle))
               }}
               onOpenChat={openChatWithSession}
+              onReport={() => setNote('Report tapped: the real screens open the report dialog')}
+              onBlock={() => setNote('Block tapped: the real screens open the block dialog')}
             />
           )}
           {tab === 'requests' && (
@@ -446,6 +518,8 @@ export function PreviewPage() {
               onSendRequest={() => undefined}
               onAcceptRequest={() => undefined}
               onOpenChat={() => undefined}
+              onReport={() => undefined}
+              onBlock={() => undefined}
             />
           </GuestHomeView>
           <SessionPopup
@@ -460,6 +534,58 @@ export function PreviewPage() {
 
       {screen === 'ended' && (
         <SessionEndedView reason={endReason} chatsDeleted={payments !== 'subscriber'} />
+      )}
+
+      {screen === 'payment' && (
+        <EntryPaymentView
+          venueName={PREVIEW_VENUE.name}
+          prices={{
+            scanFeePaise: 1900,
+            scanSessionMinutes: 60,
+            subscriptionOn: entryOptions === 'entry and subscription',
+            subscriptionPricePaise: 40000,
+            subscriptionScans: 25,
+          }}
+          paying={null}
+          error={null}
+          onPay={(purpose) => setNote(`Pay tapped: ${purpose}`)}
+          onBack={() => setScreen('landing')}
+        />
+      )}
+
+      {screen === 'safety' && (
+        <SafetyDialog
+          key={safetyMode}
+          mode={safetyMode}
+          handle="Lotus-0417"
+          busy={false}
+          error={null}
+          onBlock={() => setNote('Block confirmed')}
+          onReport={(reason) => setNote(`Report sent: ${reason}`)}
+          onCancel={() => setScreen('home')}
+        />
+      )}
+
+      {screen === 'account' && (
+        <AccountDeletionView
+          state={deletionState}
+          busy={false}
+          error={null}
+          onStart={() => setDeletion('confirming')}
+          onConfirm={() => setDeletion('pending')}
+          onBack={() => setDeletion('idle')}
+          onCancelRequest={() => setDeletion('idle')}
+        />
+      )}
+
+      {screen === 'push' && (
+        <PushPromptView
+          variant={pushVariant}
+          working={false}
+          error={null}
+          onTurnOn={() => setNote('Turn on tapped')}
+          onClose={() => setNote('Closed')}
+        />
       )}
     </div>
   )

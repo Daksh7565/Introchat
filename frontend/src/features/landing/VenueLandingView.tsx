@@ -52,7 +52,7 @@ export function VenueLandingView({
           type="button"
           disabled={location !== 'inside'}
           onClick={onContinue}
-          className="mt-auto rounded-xl bg-teal-700 py-3 font-semibold text-white disabled:bg-slate-200 disabled:text-slate-500 md:mt-0"
+          className="mt-auto rounded-xl bg-teal-700 px-4 py-3 font-semibold text-white disabled:bg-slate-200 disabled:text-slate-500 md:mt-0"
         >
           {t('landing.continue')}
         </button>

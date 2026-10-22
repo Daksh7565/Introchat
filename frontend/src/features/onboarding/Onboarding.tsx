@@ -12,6 +12,7 @@ import {
   saveTags,
   updateProfile,
 } from './api'
+import { AccountDeletionPanel } from './AccountDeletionPanel'
 import { ConsentStep } from './ConsentStep'
 import { ReadyView, UnderAgeView } from './EndViews'
 import { ProfileStep } from './ProfileStep'
@@ -137,6 +138,11 @@ export function Onboarding({ profile, join, ...logOut }: OnboardingProps) {
       )
     }
     case 'done':
-      return <ReadyView handle={profile.handle} tags={profile.tags} {...join} {...logOut} />
+      return (
+        <>
+          <ReadyView handle={profile.handle} tags={profile.tags} {...join} {...logOut} />
+          <AccountDeletionPanel />
+        </>
+      )
   }
 }

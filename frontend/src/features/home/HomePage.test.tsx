@@ -4,6 +4,7 @@ import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { Reading } from '../../lib/location'
+import { sessionStateRow } from '../../test/sessionState'
 
 // What a signed-in guest sees at "/" for each session state, and that the
 // buttons reach the right server functions. Timer arithmetic is tested in
@@ -13,9 +14,16 @@ const READING: Reading = { latitude: 23.0225, longitude: 72.5714, accuracyM: 12,
 vi.mock('../../lib/location', () => ({ getReading: () => Promise.resolve(READING) }))
 // A live channel that never delivers anything: notices are tested in useLiveChannels.test.ts.
 const channel = { on: () => channel, subscribe: () => channel, send: vi.fn() }
+// Edge Functions (payments-create / payments-verify) and Razorpay Checkout.
+const invoke = vi.fn()
+const payWithCheckout = vi.fn()
+vi.mock('../../lib/razorpay', () => ({
+  payWithCheckout: (...args: unknown[]) => payWithCheckout(...args),
+}))
 vi.mock('../../lib/supabase', () => ({
   supabase: {
     rpc: (...args: unknown[]) => rpc(...args),
+    functions: { invoke: (...args: unknown[]) => invoke(...args) },
     channel: () => channel,
     removeChannel: vi.fn(),
     auth: {
@@ -34,28 +42,11 @@ const MINUTE = 60_000
 /** A session_state row as the server sends it, `minutesLeft` before the end. */
 function row(minutesLeft: number, overrides: Record<string, unknown> = {}) {
   const now = Date.now()
-  return {
-    session_id: 's1',
-    status: 'active',
-    end_reason: null,
-    kind: 'free',
-    venue_name: 'Cafe One',
-    table_label: 'T1',
-    started_at: new Date(now - 10 * MINUTE).toISOString(),
-    expires_at: new Date(now + minutesLeft * MINUTE).toISOString(),
-    warning_at: new Date(now + (minutesLeft - 15) * MINUTE).toISOString(),
-    final_deadline_at: null,
-    final_prompt_seconds: 120,
-    away_since: null,
-    away_grace_seconds: 180,
-    payments_enabled: false,
-    continue_free_minutes: 60,
-    heartbeat_seconds: 30,
-    location_seconds: 120,
+  // The fixture's session ends 60 minutes after its start; start it so it ends in minutesLeft.
+  return sessionStateRow(now - (60 - minutesLeft) * MINUTE, {
     server_now: new Date(now).toISOString(),
-    venue_id: 'v1',
     ...overrides,
-  }
+  })
 }
 
 /** my_session answers `initial`; heartbeat and the others answer what each test sets. */
@@ -84,6 +75,8 @@ function renderHome() {
 
 beforeEach(() => {
   rpc.mockReset()
+  invoke.mockReset()
+  payWithCheckout.mockReset()
 })
 
 describe('HomePage', () => {
@@ -156,6 +149,126 @@ describe('HomePage', () => {
     expect(await screen.findByText('Lotus-1234')).toBeInTheDocument()
     await user.click(screen.getByRole('button', { name: 'Say hi' }))
     expect(rpc).toHaveBeenCalledWith('send_chat_request', { p_target_session_id: 's2' })
+  })
+
+  it('a guest with scans continues with one scan', async () => {
+    server([row(10, { payments_enabled: true, scan_credits: 4 })], {
+      continue_with_credit: row(130, { payments_enabled: true, scan_credits: 3 }),
+    })
+    renderHome()
+    const user = userEvent.setup()
+    expect(await screen.findByText('4 scans')).toBeInTheDocument()
+    await user.click(await screen.findByRole('button', { name: /Use 1 scan · \+120 min/ }))
+    expect(rpc).toHaveBeenCalledWith('continue_with_credit')
+    expect(invoke).not.toHaveBeenCalled()
+  })
+
+  it('a guest without scans pays to continue: create, Checkout, then verify', async () => {
+    server([row(10, { payments_enabled: true, subscription_enabled: true })])
+    invoke.mockImplementation((name: string) =>
+      Promise.resolve(
+        name === 'payments-create'
+          ? {
+              data: {
+                payment_id: 'p1',
+                order_id: 'order_1',
+                amount_paise: 1900,
+                currency: 'INR',
+                purpose: 'continue',
+                venue_name: 'Cafe One',
+                key_id: 'rzp_test_key',
+              },
+              error: null,
+            }
+          : { data: { status: 'applied' }, error: null },
+      ),
+    )
+    const checkout = {
+      razorpay_payment_id: 'pay_1',
+      razorpay_order_id: 'order_1',
+      razorpay_signature: 'f'.repeat(64),
+    }
+    payWithCheckout.mockResolvedValue(checkout)
+    renderHome()
+    const user = userEvent.setup()
+    await user.click(await screen.findByRole('button', { name: /Continue 60 min · ₹19/ }))
+    await waitFor(() =>
+      expect(invoke).toHaveBeenCalledWith('payments-verify', {
+        body: {
+          payment_id: 'p1',
+          razorpay_order_id: 'order_1',
+          razorpay_payment_id: 'pay_1',
+          razorpay_signature: checkout.razorpay_signature,
+        },
+      }),
+    )
+    // The amount is never sent by the phone.
+    expect(invoke).toHaveBeenCalledWith('payments-create', { body: { purpose: 'continue' } })
+    expect(payWithCheckout).toHaveBeenCalledWith(
+      expect.objectContaining({ orderId: 'order_1', amountPaise: 1900 }),
+    )
+  })
+
+  it('closing Checkout is not shown as an error', async () => {
+    server([row(10, { payments_enabled: true, subscription_enabled: true })])
+    invoke.mockResolvedValue({
+      data: {
+        payment_id: 'p1',
+        order_id: 'order_1',
+        amount_paise: 40000,
+        currency: 'INR',
+        purpose: 'subscription',
+        venue_name: 'Cafe One',
+        key_id: 'rzp_test_key',
+      },
+      error: null,
+    })
+    const { AppError } = await import('../../lib/errors')
+    payWithCheckout.mockRejectedValue(new AppError('PAYMENT_CANCELLED'))
+    renderHome()
+    const user = userEvent.setup()
+    await user.click(await screen.findByRole('button', { name: /Get 25 scans/ }))
+    await waitFor(() => expect(payWithCheckout).toHaveBeenCalled())
+    expect(screen.queryByText('Payment cancelled.')).not.toBeInTheDocument()
+    expect(invoke).not.toHaveBeenCalledWith('payments-verify', expect.anything())
+  })
+
+  it('a guest reports someone from the people list, and is told it worked', async () => {
+    server([row(45)], {
+      get_people: [
+        {
+          session_id: 's2',
+          handle: 'Lotus-1234',
+          tags: ['music'],
+          shared_tags: ['music'],
+          online: true,
+          chat_state: 'none',
+          request_id: null,
+          conversation_id: null,
+        },
+      ],
+      report_person: 'r1',
+    })
+    renderHome()
+    const user = userEvent.setup()
+    await user.click(await screen.findByRole('button', { name: 'More options' }))
+    await user.click(screen.getByRole('button', { name: 'Report' }))
+    await user.click(screen.getByLabelText('Inappropriate name, interests or messages'))
+    await user.click(screen.getByRole('button', { name: 'Report and block' }))
+    expect(rpc).toHaveBeenCalledWith('report_person', {
+      p_reason: 'inappropriate',
+      p_session_id: 's2',
+    })
+    expect(await screen.findByText(/Our team will review it/)).toBeInTheDocument()
+  })
+
+  it('a banned guest is told so', async () => {
+    rpc.mockResolvedValue({
+      data: null,
+      error: { message: 'BANNED', details: '', hint: '', code: 'P0001' },
+    })
+    renderHome()
+    expect(await screen.findByText('Your account has been banned.')).toBeInTheDocument()
   })
 
   it('leaves only on the second tap', async () => {

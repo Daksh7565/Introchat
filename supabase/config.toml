@@ -395,6 +395,11 @@ allow_dynamic_registration = false
 [functions.push-send]
 verify_jwt = false
 
+# Called by Razorpay, which signs every request (X-Razorpay-Signature);
+# there is no user login to verify.
+[functions.payments-webhook]
+verify_jwt = false
+
 [edge_runtime]
 enabled = true
 # Supported request policies: `oneshot`, `per_worker`.
@@ -459,6 +464,8 @@ project_id = "kckjteuwwhqifiofyeii"
 919000000013 = "123456"
 919000000014 = "123456"
 919000000015 = "123456"
+919000000016 = "123456"
+919000000017 = "123456"
 
 # OTP SMS go through the sms-hook Edge Function (SIM gateway phone, decision 16).
 # The secret is read from supabase/.env (git-ignored) at push time; the same value

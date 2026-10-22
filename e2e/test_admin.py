@@ -16,7 +16,7 @@ import string
 import pytest
 from playwright.sync_api import Browser, expect
 
-from conftest import ADMIN_STATE, BASE_URL, sql
+from conftest import ADMIN_STATE, BASE_URL, sql, watch_csp
 
 pytestmark = pytest.mark.skipif(
     not ADMIN_STATE.exists(),
@@ -36,6 +36,9 @@ def test_admin_sets_up_a_venue_a_guest_can_scan(browser: Browser, phone):
         viewport={"width": 1280, "height": 900},
     )
     context.add_init_script("localStorage.setItem('introchat.language', 'en')")
+    # The Console reaches the most outside services (map tiles, address search).
+    violations: list[str] = []
+    watch_csp(context, violations)
     page = context.new_page()
     try:
         page.goto(f"{BASE_URL}/admin")
@@ -94,6 +97,7 @@ def test_admin_sets_up_a_venue_a_guest_can_scan(browser: Browser, phone):
         # Leave nothing scannable behind.
         page.get_by_role("button", name="Deactivate venue").click()
         expect(page.get_by_role("button", name="Activate venue")).to_be_visible()
+        assert not violations, "Content-Security-Policy blocked something:\n" + "\n".join(violations)
     finally:
         # Supabase rotates the login token on use; keep the newest for next run.
         context.storage_state(path=str(ADMIN_STATE))

@@ -4,17 +4,13 @@ import { buildNotification, parseRequest, PushError, secretsMatch } from './logi
 const USER = '00000000-0000-4000-8000-0000000000f2'
 const CONV = '52000000-0000-4000-8000-000000000001'
 
-Deno.test('a message notification names the sender, never the text', () => {
-  const n = buildNotification(
-    parseRequest({ user_id: USER, kind: 'chat.message', handle: 'Mango-4821', language: 'en', conversation_id: CONV }),
+Deno.test('a message notification carries who and which chat, never the text', () => {
+  assertEquals(
+    buildNotification(
+      parseRequest({ user_id: USER, kind: 'chat.message', handle: 'Mango-4821', language: 'gu', conversation_id: CONV }),
+    ),
+    { kind: 'chat.message', handle: 'Mango-4821', language: 'gu', tag: `chat:${CONV}`, url: '/' },
   )
-  assertEquals(n.title, 'New message from Mango-4821')
-  assertEquals(n.tag, `chat:${CONV}`)
-})
-
-Deno.test('the text is in the recipient language', () => {
-  const n = buildNotification(parseRequest({ user_id: USER, kind: 'request.received', handle: 'Mango-4821', language: 'gu' }))
-  assertEquals(n.title, 'Mango-4821 ચેટ કરવા માંગે છે')
 })
 
 Deno.test('an unknown language falls back to English', () => {
@@ -25,6 +21,12 @@ Deno.test('session notifications replace each other', () => {
   const warning = buildNotification(parseRequest({ user_id: USER, kind: 'session.warning' }))
   const final = buildNotification(parseRequest({ user_id: USER, kind: 'session.final_prompt' }))
   assertEquals(warning.tag, final.tag)
+})
+
+Deno.test('request notifications share one tag', () => {
+  const received = buildNotification(parseRequest({ user_id: USER, kind: 'request.received', handle: 'A-0001' }))
+  const accepted = buildNotification(parseRequest({ user_id: USER, kind: 'request.accepted', handle: 'B-0002' }))
+  assertEquals([received.tag, accepted.tag], ['requests', 'requests'])
 })
 
 Deno.test('an unknown kind or a malformed user id is refused', () => {

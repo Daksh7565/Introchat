@@ -1,0 +1,160 @@
+{
+  "draft": "Draft: this text has not been reviewed by a lawyer yet and may change before launch.",
+  "updated": "Last updated: {{date}}",
+  "home": "Go to IntroChat home",
+  "privacy": {
+    "title": "Privacy policy",
+    "intro": "IntroChat lets adults at the same café or restaurant chat anonymously. This policy explains what personal data we collect, why, how long we keep it and the choices you have. It is written for the Digital Personal Data Protection Act, 2023.",
+    "sections": {
+      "who": {
+        "heading": "Who is responsible",
+        "body": "IntroChat is run by {{legalName}}, {{address}} (\"we\"). We decide why and how your data is used."
+      },
+      "collect": {
+        "heading": "What we collect",
+        "body": "Your mobile number, to log you in with a one-time code and to keep banned people out.\nYour birth year, to confirm you are 18 or older. Your nickname and gender, only if you choose to give them.\nThe interests you pick, so people nearby can see what you have in common.\nYour location while you check in and during your visit, only to confirm you are at the venue.\nYour chat requests and messages, so they can be delivered.\nPayment records (amount, status and Razorpay's reference numbers) if you pay. Card and UPI details go to Razorpay, never to us.\nTechnical data: a random ID kept in your browser to limit repeated attempts, your notification subscription if you turn notifications on, and error reports from the app."
+      },
+      "shown": {
+        "heading": "What other guests see",
+        "body": "Other guests see only your random name (like Mango-4821) and your interests. They never see your phone number, nickname, birth year, gender or location. Notifications never show what anyone wrote."
+      },
+      "why": {
+        "heading": "Why we use it",
+        "body": "We use your data only to run IntroChat: to log you in, check you are at the venue, show you to other guests there, deliver chats, take payments, keep people safe (blocks, reports and bans) and fix problems. We do not sell your data or use it for advertising. You give consent on the first screen after logging in, and you can withdraw it at any time by deleting your account."
+      },
+      "kept": {
+        "heading": "How long we keep it",
+        "body": "Exact location: only the latest reading, only during your visit; deleted when the visit ends. We keep only how far from the venue you were at the first check and how accurate it was.\nChats: deleted when your visit ends. With a subscription, your chat history is kept while you have scans left.\nReports: a copy of the reported conversation (up to the last 50 messages) is kept for 30 days for review.\nVisit records: 1 year. Payment records: 8 years, as Indian accounting law requires.\nIf you are banned, a one-way scrambled form of your phone number is kept so the ban holds even if you delete your account."
+      },
+      "shared": {
+        "heading": "Who we share it with",
+        "body": "We use these service providers, only to run IntroChat: Supabase (database and login), Cloudflare (website), Razorpay (payments), Sentry (error reports, which contain no messages or anything you typed), an SMS gateway we operate (login codes) and your phone's notification service (Google, Apple or Mozilla). Their servers may be outside India. We share data with authorities only when Indian law requires it."
+      },
+      "rights": {
+        "heading": "Your rights",
+        "body": "You can ask us for a summary of the data we hold about you, have it corrected, or have it erased. You can delete your account in the app (Delete my account); we complete it within 30 days. You can nominate someone to use these rights for you if you die or cannot act yourself. To use any of these rights, write to our Grievance Officer (see Contact)."
+      },
+      "children": {
+        "heading": "Adults only",
+        "body": "IntroChat is only for people aged 18 and over. We do not knowingly collect data about anyone younger; if your birth year shows you are under 18, you cannot use the app."
+      },
+      "security": {
+        "heading": "Security",
+        "body": "Data is encrypted in transit, access is limited to the people who run IntroChat, and administrators sign in with two-factor authentication. No system is perfectly secure; if a breach affects you, we will tell you and the Data Protection Board as the law requires."
+      },
+      "changes": {
+        "heading": "Changes",
+        "body": "If we change this policy, we will update the date above and, for important changes, ask for your consent again in the app."
+      },
+      "grievance": {
+        "heading": "Questions and complaints",
+        "body": "Write to our Grievance Officer, {{grievanceOfficer}}, at {{grievanceEmail}}. If you are not satisfied with our answer, you can complain to the Data Protection Board of India."
+      }
+    }
+  },
+  "terms": {
+    "title": "Terms of use",
+    "intro": "By using IntroChat you agree to these terms. Please read them together with our Privacy policy.",
+    "sections": {
+      "service": {
+        "heading": "The service",
+        "body": "IntroChat lets guests at the same venue see each other's interests and chat anonymously while they are there. It is provided by {{legalName}}."
+      },
+      "eligibility": {
+        "heading": "Who can use it",
+        "body": "You must be 18 or older and have an Indian mobile number. One account per person. Your account is yours alone; keep your phone and login codes private."
+      },
+      "conduct": {
+        "heading": "How to behave",
+        "body": "Be respectful. Do not harass, threaten, bully or stalk anyone.\nNo hate speech, sexual messages nobody asked for, or illegal content.\nDo not share anyone's personal details, and do not ask for money.\nDo not pretend to be someone else, fake your location or use bots.\nMeeting in person is your choice and your responsibility: meet in a public place and look after yourself."
+      },
+      "safety": {
+        "heading": "Blocks, reports and bans",
+        "body": "You can block or report anyone. We review reports and may remove someone from a venue, or ban them from IntroChat, for breaking these terms. A ban is tied to the phone number. Where the law requires, we share information with the police."
+      },
+      "payments": {
+        "heading": "Paid features",
+        "body": "Some venues charge for entry, extra time or a subscription. The price and what you get are shown before you pay, and payments are processed by Razorpay. Refunds follow our Refund policy."
+      },
+      "content": {
+        "heading": "Your messages",
+        "body": "You are responsible for what you send. Your messages remain yours; you allow us to store and deliver them as needed to run the service."
+      },
+      "availability": {
+        "heading": "Availability",
+        "body": "We try to keep IntroChat working but cannot promise it will always be available or free of errors. A venue may close IntroChat for the day, and we may change or stop features."
+      },
+      "liability": {
+        "heading": "Liability",
+        "body": "We are not responsible for what other guests say or do, online or in person. As far as the law allows, our total liability to you is limited to what you paid us in the 3 months before the claim."
+      },
+      "ending": {
+        "heading": "Closing your account",
+        "body": "You can delete your account at any time. We may suspend or close accounts that break these terms."
+      },
+      "law": {
+        "heading": "Law and disputes",
+        "body": "These terms are governed by the laws of India. The courts at {{city}} have jurisdiction."
+      },
+      "changes": {
+        "heading": "Changes",
+        "body": "We may update these terms; the date above shows the latest version. If you keep using IntroChat after an update, you accept it."
+      }
+    }
+  },
+  "refunds": {
+    "title": "Refund and cancellation policy",
+    "intro": "This policy covers payments made in IntroChat through Razorpay.",
+    "sections": {
+      "what": {
+        "heading": "What you pay for",
+        "body": "Entry to a venue for a set time, extra time during a visit, or a subscription with a number of entries. The price and duration are always shown before you pay. Access is given in the app as soon as the payment is confirmed; nothing is shipped."
+      },
+      "failed": {
+        "heading": "Money taken but no access",
+        "body": "If money left your account but you did not get in, the payment is usually confirmed within a few minutes and applied automatically. An unused entry payment can still be used to enter for 30 minutes. If neither happens, write to us and we will refund it in full."
+      },
+      "ourSide": {
+        "heading": "Problems on our side",
+        "body": "If the venue closes IntroChat early for the day, or a fault on our side ends your paid time, we refund the fee for that visit."
+      },
+      "noRefund": {
+        "heading": "When we do not refund",
+        "body": "Once a paid visit has started, its fee is not refunded because you left early or changed your mind. Fees are not refunded if you are removed or banned for breaking our Terms. Unused entries in a subscription are not refunded, unless the law requires it."
+      },
+      "how": {
+        "heading": "How to ask",
+        "body": "Write to {{supportEmail}} with the phone number you used and the date of the payment. We reply within 2 working days."
+      },
+      "when": {
+        "heading": "When you get the money",
+        "body": "Approved refunds go back to the original payment method through Razorpay, usually within 5 to 7 working days."
+      }
+    }
+  },
+  "contact": {
+    "title": "Contact and grievances",
+    "intro": "We can help with questions, problems with the app, payments or your data.",
+    "fields": {
+      "business": "Business",
+      "address": "Address",
+      "support": "Support",
+      "grievanceOfficer": "Grievance Officer",
+      "grievanceEmail": "Grievance email"
+    },
+    "sections": {
+      "grievance": {
+        "heading": "Grievance Officer",
+        "body": "For complaints about content, safety or how we use your data, write to our Grievance Officer. We acknowledge complaints within 24 hours and resolve them within 15 days."
+      },
+      "board": {
+        "heading": "Data Protection Board",
+        "body": "If you are not satisfied with how we handled a complaint about your personal data, you can complain to the Data Protection Board of India."
+      },
+      "urgent": {
+        "heading": "Feeling unsafe?",
+        "body": "Leave, and call 112. You can block and report the person in the app."
+      }
+    }
+  }
+}

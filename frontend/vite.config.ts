@@ -2,6 +2,8 @@ import tailwindcss from '@tailwindcss/vite'
 import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
 import { defineConfig } from 'vitest/config'
+import { legalCheck } from './build/legalCheck.ts'
+import { securityHeaders } from './build/securityHeaders.ts'
 
 // Theme colour is shared by the web manifest, the browser UI bar and the
 // splash screen of the installed app.
@@ -34,6 +36,8 @@ export default defineConfig({
   plugins: [
     react(),
     tailwindcss(),
+    securityHeaders(),
+    legalCheck('src/features/legal/business.json'),
     VitePWA({
       // injectManifest (not generateSW): we write our own service worker
       // because M4 adds Web Push handlers, which generateSW cannot express.
@@ -93,6 +97,6 @@ export default defineConfig({
     maxWorkers: 2,
     environment: 'jsdom',
     setupFiles: ['src/test/setup.ts'],
-    include: ['src/**/*.test.{ts,tsx}'],
+    include: ['src/**/*.test.{ts,tsx}', 'build/**/*.test.ts'],
   },
 })

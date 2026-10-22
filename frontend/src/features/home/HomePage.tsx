@@ -2,6 +2,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ErrorText } from '../../components/ErrorText'
+import { LegalLinks } from '../../components/LegalLinks'
 import { AppError } from '../../lib/errors'
 import { useAuthSession } from '../../lib/useAuthSession'
 import { getMySession, LIVE_SESSION_KEY, type SessionState } from '../session/api'
@@ -38,6 +39,11 @@ export function HomePage() {
     )
   }
 
+  // A banned guest is refused on every call (BANNED): say so, plainly.
+  if (session.error instanceof AppError && session.error.code === 'BANNED') {
+    return <SessionEndedView reason="banned" chatsDeleted={false} />
+  }
+
   // An admin account (NOT_A_GUEST) or no session: the way in is a table QR.
   const notAGuest = session.error instanceof AppError && session.error.code === 'NOT_A_GUEST'
   if (session.isError && !notAGuest) {
@@ -61,13 +67,21 @@ export function HomePage() {
       <section className="flex flex-1 flex-col items-center justify-center gap-3 text-center">
         <h1 className="text-2xl font-semibold">{t('home.title')}</h1>
         <p className="text-slate-600">{t('home.scanPrompt')}</p>
+        <div className="mt-auto pt-8">
+          <LegalLinks />
+        </div>
       </section>
     )
   }
 
   if (state.status === 'ended') {
-    // Until subscriptions exist (M5) every guest's chats go when the visit ends.
-    return <SessionEndedView reason={state.endReason ?? 'expired'} chatsDeleted />
+    // Subscribers (scans left) keep their chats; everyone else's go (decision 10).
+    return (
+      <SessionEndedView
+        reason={state.endReason ?? 'expired'}
+        chatsDeleted={state.scanCredits === 0}
+      />
+    )
   }
 
   return (

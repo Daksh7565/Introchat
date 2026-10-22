@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { HandleAvatar } from '../../components/HandleAvatar'
 import { TagList } from '../../components/TagList'
@@ -8,15 +9,25 @@ interface PersonCardProps {
   onSendRequest: (sessionId: string) => void
   onAcceptRequest: (sessionId: string) => void
   onOpenChat: (sessionId: string) => void
+  onReport: (sessionId: string) => void
+  onBlock: (sessionId: string) => void
 }
+
+type ActionProps = Pick<
+  PersonCardProps,
+  'person' | 'onSendRequest' | 'onAcceptRequest' | 'onOpenChat'
+>
 
 export function PersonCard({
   person,
   onSendRequest,
   onAcceptRequest,
   onOpenChat,
+  onReport,
+  onBlock,
 }: PersonCardProps) {
   const { t } = useTranslation()
+  const [menuOpen, setMenuOpen] = useState(false)
 
   return (
     <li
@@ -26,7 +37,46 @@ export function PersonCard({
       <div className="min-w-0 flex-1">
         <div className="flex items-baseline justify-between gap-2">
           <span className="truncate font-semibold">{person.handle}</span>
-          {!person.online && <span className="text-xs text-slate-500">{t('people.offline')}</span>}
+          <span className="flex items-center gap-2">
+            {!person.online && (
+              <span className="text-xs text-slate-500">{t('people.offline')}</span>
+            )}
+            <span className="relative">
+              <button
+                type="button"
+                className="px-1 text-lg leading-none text-slate-500"
+                aria-label={t('chat.menu')}
+                aria-expanded={menuOpen}
+                onClick={() => setMenuOpen((open) => !open)}
+              >
+                ⋮
+              </button>
+              {menuOpen && (
+                <span className="absolute right-0 z-10 mt-1 flex w-36 flex-col rounded-lg border border-slate-200 bg-white py-1 shadow-lg">
+                  <button
+                    type="button"
+                    className="px-3 py-2 text-left text-sm"
+                    onClick={() => {
+                      setMenuOpen(false)
+                      onReport(person.sessionId)
+                    }}
+                  >
+                    {t('chat.report')}
+                  </button>
+                  <button
+                    type="button"
+                    className="px-3 py-2 text-left text-sm text-rose-700"
+                    onClick={() => {
+                      setMenuOpen(false)
+                      onBlock(person.sessionId)
+                    }}
+                  >
+                    {t('chat.block')}
+                  </button>
+                </span>
+              )}
+            </span>
+          </span>
         </div>
         {person.sharedTags.length > 0 && (
           <p className="text-xs font-semibold text-teal-700">
@@ -49,7 +99,7 @@ export function PersonCard({
   )
 }
 
-function PersonAction({ person, onSendRequest, onAcceptRequest, onOpenChat }: PersonCardProps) {
+function PersonAction({ person, onSendRequest, onAcceptRequest, onOpenChat }: ActionProps) {
   const { t } = useTranslation()
   const primary = 'rounded-lg bg-teal-700 px-3 py-1.5 text-sm font-semibold text-white'
   const muted = 'rounded-lg bg-slate-100 px-3 py-1.5 text-sm text-slate-500'

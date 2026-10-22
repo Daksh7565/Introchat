@@ -1,0 +1,98 @@
+name: backup
+
+# Nightly database backup (M8). The free Supabase plan has no downloadable
+# backups, so this dumps the database with the Supabase CLI, encrypts the dump
+# with age to a public key whose private half only the owner holds (the dump
+# contains phone numbers and logins), and keeps it 30 days as a workflow
+# artifact. Restore and set-up: BACKUP_AND_RESTORE.md.
+#
+# Needs, in Settings → Secrets and variables → Actions:
+#   secret   BACKUP_DB_URL         Session pooler connection string of the
+#                                  project to back up (port 5432, not 6543:
+#                                  pg_dump needs a session). Contains the
+#                                  database password; never printed.
+#   variable BACKUP_AGE_RECIPIENT  The age public key (age1...). Public: only
+#                                  the private key can decrypt.
+
+on:
+  schedule:
+    # 21:30 UTC = 03:00 IST, when no venue is open.
+    - cron: '30 21 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: backup
+  cancel-in-progress: false
+
+jobs:
+  backup:
+    name: Dump, encrypt, keep 30 days
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: frontend/.node-version
+          cache: npm
+      - run: npm ci
+
+      - name: Check configuration
+        env:
+          BACKUP_DB_URL: ${{ secrets.BACKUP_DB_URL }}
+          BACKUP_AGE_RECIPIENT: ${{ vars.BACKUP_AGE_RECIPIENT }}
+        run: |
+          [ -n "$BACKUP_DB_URL" ] || { echo "::error::Secret BACKUP_DB_URL is not set"; exit 1; }
+          [[ "$BACKUP_AGE_RECIPIENT" == age1* ]] || {
+            echo "::error::Variable BACKUP_AGE_RECIPIENT must be an age public key (age1...)"; exit 1; }
+
+      # Ubuntu's age (1.1.1 on 24.04); the restore test used the same package.
+      - name: Install age
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq age
+
+      # The three files Supabase's own restore guide uses. Supabase Storage is
+      # included but unused; the restore step skips it (tools/backup/restore-sql.mjs).
+      - name: Dump
+        env:
+          BACKUP_DB_URL: ${{ secrets.BACKUP_DB_URL }}
+        run: |
+          set -euo pipefail
+          umask 077
+          mkdir "$RUNNER_TEMP/dump" && cd "$RUNNER_TEMP/dump"
+          npx --prefix "$GITHUB_WORKSPACE" supabase db dump --db-url "$BACKUP_DB_URL" --role-only -f roles.sql
+          npx --prefix "$GITHUB_WORKSPACE" supabase db dump --db-url "$BACKUP_DB_URL" -f schema.sql
+          npx --prefix "$GITHUB_WORKSPACE" supabase db dump --db-url "$BACKUP_DB_URL" --data-only --use-copy -f data.sql
+          # A dump that "succeeds" without our data is worse than a failed one:
+          # the failure email would never come.
+          grep -q '^COPY "public"."profiles"' data.sql || { echo "::error::data.sql has no profiles table"; exit 1; }
+          grep -q '^COPY "auth"."users"' data.sql || { echo "::error::data.sql has no auth.users"; exit 1; }
+          grep -qE 'CREATE TABLE (IF NOT EXISTS )?"public"\."sessions"' schema.sql || { echo "::error::schema.sql has no sessions table"; exit 1; }
+          ls -l
+          # Rows per table, to compare a restore against (BACKUP_AND_RESTORE.md, step 7).
+          node "$GITHUB_WORKSPACE/tools/backup/restore-sql.mjs" --counts data.sql
+
+      - name: Encrypt
+        id: encrypt
+        env:
+          BACKUP_AGE_RECIPIENT: ${{ vars.BACKUP_AGE_RECIPIENT }}
+        run: |
+          set -euo pipefail
+          stamp=$(date -u +%Y-%m-%dT%H%MZ)
+          file="$RUNNER_TEMP/introchat-db-$stamp.tar.gz.age"
+          tar -C "$RUNNER_TEMP/dump" -czf - roles.sql schema.sql data.sql | age -r "$BACKUP_AGE_RECIPIENT" -o "$file"
+          # Only the encrypted file leaves this step.
+          rm -rf "$RUNNER_TEMP/dump"
+          echo "stamp=$stamp" >> "$GITHUB_OUTPUT"
+          echo "file=$file" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: introchat-db-${{ steps.encrypt.outputs.stamp }}
+          path: ${{ steps.encrypt.outputs.file }}
+          retention-days: 30
+          if-no-files-found: error
+          # Already compressed and encrypted.
+          compression-level: 0

@@ -32,7 +32,7 @@ function renderPanel() {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
   render(
     <QueryClientProvider client={client}>
-      <ChatPanel conversation={CONVERSATION} />
+      <ChatPanel conversation={CONVERSATION} onReport={vi.fn()} onBlock={vi.fn()} />
     </QueryClientProvider>,
   )
 }
@@ -75,7 +75,11 @@ describe('ChatPanel', () => {
     const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
     render(
       <QueryClientProvider client={client}>
-        <ChatPanel conversation={{ ...CONVERSATION, canSend: false }} />
+        <ChatPanel
+          conversation={{ ...CONVERSATION, canSend: false }}
+          onReport={vi.fn()}
+          onBlock={vi.fn()}
+        />
       </QueryClientProvider>,
     )
     expect(await screen.findByText(/Lotus-1234 has left/)).toBeInTheDocument()

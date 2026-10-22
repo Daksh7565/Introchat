@@ -1,12 +1,17 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router'
 import { ErrorText } from '../../components/ErrorText'
+import { deviceId } from '../../lib/deviceId'
 import { AppError } from '../../lib/errors'
 import { getReading } from '../../lib/location'
 import { useAuthSession } from '../../lib/useAuthSession'
 import { GuestLogin } from '../auth/GuestLogin'
 import { signOutHere } from '../auth/guestAuth'
+import { type EntryPrices, parseEntryPrices } from '../payments/entryPrices'
+import { EntryPaymentView } from '../payments/EntryPaymentView'
+import { isCancelled, usePayment } from '../payments/usePayment'
 import { LIVE_SESSION_KEY, startSession } from '../session/api'
 import { getMyProfile, MY_PROFILE_KEY } from './api'
 import { NotAGuestView } from './EndViews'
@@ -46,6 +51,8 @@ export function GuestEntry({ slug, qrToken, venueName, onBack }: GuestEntryProps
       queryClient.removeQueries({ queryKey: LIVE_SESSION_KEY })
     },
   })
+  // Set when joining needs a payment first (switches on, no scans left).
+  const [entryPrices, setEntryPrices] = useState<EntryPrices | null>(null)
   // A fresh reading right now: the session is decided on it, not on the landing check.
   const join = useMutation({
     mutationFn: async () => startSession(slug, qrToken, await getReading()),
@@ -53,11 +60,18 @@ export function GuestEntry({ slug, qrToken, venueName, onBack }: GuestEntryProps
       queryClient.setQueryData([...LIVE_SESSION_KEY, userId], state)
       void navigate('/')
     },
+    onError: (error) => {
+      if (error instanceof AppError && error.code === 'PAYMENT_REQUIRED') {
+        setEntryPrices(parseEntryPrices(error.details))
+      }
+    },
   })
+  const pay = usePayment()
   const joinProps = {
     venueName,
     joining: join.isPending,
-    joinError: join.error,
+    // PAYMENT_REQUIRED is answered by the payment screen, not an error line.
+    joinError: entryPrices !== null ? null : join.error,
     onJoin: () => join.mutate(),
   }
   const logOutProps = {
@@ -93,6 +107,42 @@ export function GuestEntry({ slug, qrToken, venueName, onBack }: GuestEntryProps
           {t('location.retry')}
         </button>
       </section>
+    )
+  }
+
+  if (entryPrices !== null) {
+    return (
+      <EntryPaymentView
+        venueName={venueName}
+        prices={entryPrices}
+        paying={pay.isPending ? (pay.variables?.purpose ?? null) : null}
+        error={isCancelled(pay.error) ? null : pay.error}
+        onPay={(purpose) =>
+          pay.mutate(
+            {
+              purpose,
+              entry: async () => ({
+                slug,
+                qrToken,
+                reading: await getReading(),
+                deviceId: deviceId(),
+              }),
+            },
+            {
+              // Joining again finds the payment (or the new scans) on the server.
+              onSuccess: () => {
+                setEntryPrices(null)
+                join.mutate()
+              },
+            },
+          )
+        }
+        onBack={() => {
+          pay.reset()
+          join.reset()
+          setEntryPrices(null)
+        }}
+      />
     )
   }
 

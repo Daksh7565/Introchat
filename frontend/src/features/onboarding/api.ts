@@ -9,19 +9,6 @@ function isGender(value: string | null): value is Gender {
   return value !== null && (GENDERS as readonly string[]).includes(value)
 }
 
-// Declared here rather than taken from database.types.ts: generated types mark
-// every function result column as non-null, but these are null until set.
-interface MyProfileRow {
-  handle: string
-  nickname: string | null
-  birth_year: number | null
-  gender: string | null
-  consent_current: boolean
-  age_blocked: boolean
-  tags: string[]
-  profile_complete: boolean
-}
-
 export interface MyProfile {
   handle: string
   nickname: string | null
@@ -38,7 +25,9 @@ export const MY_PROFILE_KEY = ['my-profile'] as const
 
 /** The signed-in guest's own profile. Throws NOT_A_GUEST for an account without one (an admin). */
 export async function getMyProfile(): Promise<MyProfile> {
-  const rows = unwrap(await supabase.rpc('my_profile')) as MyProfileRow[]
+  // Generated types mark every column non-null; nickname, birth_year and
+  // gender are really NULL until set, and MyProfile is typed that way.
+  const rows = unwrap(await supabase.rpc('my_profile'))
   const row = rows[0]
   if (!row) throw new AppError('NOT_A_GUEST')
   return {
@@ -69,10 +58,10 @@ export async function updateProfile(input: ProfileInput): Promise<'ok' | 'under_
   const result = unwrap(
     await supabase.rpc('update_profile', {
       p_birth_year: input.birthYear,
-      p_nickname: input.nickname,
-      // The generated type says string, but the function accepts null ("not given").
-      p_gender: input.gender as string,
       p_language: input.language,
+      // Left out = NULL = "not given" (the SQL defaults; migration hardening).
+      ...(input.nickname === '' ? {} : { p_nickname: input.nickname }),
+      ...(input.gender === null ? {} : { p_gender: input.gender }),
     }),
   )
   return result === 'under_age' ? 'under_age' : 'ok'
@@ -86,4 +75,21 @@ export async function getTagSuggestions(query: string): Promise<string[]> {
 /** Replaces the guest's tags; returns them as the server saved them. */
 export async function saveTags(names: string[]): Promise<string[]> {
   return unwrap(await supabase.rpc('set_tags', { p_names: names }))
+}
+
+export const DELETION_KEY = ['my-deletion-request'] as const
+
+/** When the guest asked for their account to be deleted; null = not asked (or cancelled). */
+export async function myDeletionRequest(): Promise<Date | null> {
+  const at = unwrap(await supabase.rpc('my_deletion_request'))
+  return at === null ? null : new Date(at)
+}
+
+/** Asks for deletion (§11); an admin completes it within 30 days. */
+export async function requestDeletion(): Promise<Date> {
+  return new Date(unwrap(await supabase.rpc('request_account_deletion')))
+}
+
+export async function cancelDeletion(): Promise<void> {
+  unwrap(await supabase.rpc('cancel_account_deletion'))
 }

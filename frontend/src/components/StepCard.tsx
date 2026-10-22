@@ -38,7 +38,7 @@ export function StepCard({ title, stepLabel, onBack, children }: StepCardProps) 
 
 /** The main action of a step: full width, at the bottom on phones. */
 export const PRIMARY_BUTTON =
-  'w-full rounded-xl bg-teal-700 py-3 font-semibold text-white disabled:bg-slate-200 disabled:text-slate-500'
+  'w-full rounded-xl bg-teal-700 px-4 py-3 font-semibold text-white disabled:bg-slate-200 disabled:text-slate-500'
 
 export const TEXT_INPUT =
   'w-full rounded-lg border border-slate-300 px-3 py-2.5 text-base focus:border-teal-600 focus:outline-none'

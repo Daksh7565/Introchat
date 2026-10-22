@@ -21,13 +21,14 @@ import secrets
 import string
 import subprocess
 import time
+import urllib.parse
 import urllib.request
 from collections.abc import Iterator
 from dataclasses import dataclass
 from pathlib import Path
 
 import pytest
-from playwright.sync_api import Browser, BrowserContext, Page, Playwright, expect
+from playwright.sync_api import Browser, BrowserContext, ConsoleMessage, Page, Playwright, expect
 
 REPO = Path(__file__).resolve().parents[1]
 BASE_URL = os.environ.get("E2E_BASE_URL", "http://localhost:5173")
@@ -48,6 +49,8 @@ PHONES = {
     "minor": "9000000013",
     "login": "9000000014",
     "first_visit": "9000000015",
+    "reporter": "9000000016",
+    "reported": "9000000017",
 }
 
 expect.set_options(timeout=15_000)
@@ -83,34 +86,46 @@ def delete_test_guests() -> None:
 # --------------------------------------------------------------------------
 # Session-wide fixtures
 # --------------------------------------------------------------------------
-def _server_up() -> bool:
+def _server_state() -> str:
+    """'introchat', 'other' (another app holds the port) or 'down'."""
     try:
         with urllib.request.urlopen(BASE_URL, timeout=3) as response:
-            return response.status == 200
+            page = response.read(4096).decode("utf-8", errors="replace")
     except OSError:
-        return False
+        return "down"
+    # Another local project on the same port once made every test fail in a
+    # way that looked like an app bug; check it is really this app.
+    return "introchat" if "<title>IntroChat</title>" in page else "other"
 
 
 @pytest.fixture(scope="session", autouse=True)
 def dev_server() -> Iterator[None]:
-    """Uses a running `npm run dev`, or starts one for the test run."""
-    if _server_up():
+    """Uses a running IntroChat `npm run dev`, or starts one for the test run."""
+    state = _server_state()
+    if state == "introchat":
         yield
         return
+    if state == "other":
+        pytest.exit(
+            f"{BASE_URL} is serving a different app. Stop it, or run IntroChat on another "
+            "port and point the tests at it: $env:E2E_BASE_URL='http://localhost:5174'",
+            returncode=2,
+        )
+    port = urllib.parse.urlparse(BASE_URL).port or 5173
     npm = "npm.cmd" if os.name == "nt" else "npm"
     process = subprocess.Popen(
-        [npm, "run", "dev", "--", "--port", "5173", "--strictPort"],
+        [npm, "run", "dev", "--", "--port", str(port), "--strictPort"],
         cwd=REPO / "frontend",
         stdout=subprocess.DEVNULL,
         stderr=subprocess.DEVNULL,
     )
     try:
         for _ in range(60):
-            if _server_up():
+            if _server_state() == "introchat":
                 break
             time.sleep(1)
         else:
-            raise RuntimeError("npm run dev did not start on port 5173")
+            raise RuntimeError(f"npm run dev did not start IntroChat on port {port}")
         yield
     finally:
         process.terminate()
@@ -155,6 +170,8 @@ def venue() -> Iterator[Venue]:
     )
     yield Venue(venue_id, slug, name, token)
     delete_test_guests()  # their sessions point at this venue
+    # Reports keep their venue on purpose (safety records); test ones go here.
+    sql(f"delete from public.reports where venue_id = '{venue_id}'")
     sql(f"delete from public.sessions where venue_id = '{venue_id}'")
     sql(f"delete from public.venues where id = '{venue_id}'")
 
@@ -170,10 +187,27 @@ def pytest_runtest_makereport(item, call):
     setattr(item, f"rep_{report.when}", report)
 
 
+def watch_csp(context: BrowserContext, violations: list[str]) -> None:
+    """Adds every Content-Security-Policy violation the browser reports to `violations`.
+
+    Only a deployed-style build has a policy (dist/_headers, served by
+    `npx wrangler dev`); `npm run dev` sends none, so nothing is added there.
+    A blocked address breaks a screen without failing a click, so the tests
+    fail on the browser's report instead.
+    """
+
+    def on_console(message: ConsoleMessage) -> None:
+        if "Content Security Policy" in message.text:
+            violations.append(message.text)
+
+    context.on("console", on_console)
+
+
 @pytest.fixture
 def phone(browser: Browser, playwright: Playwright, request: pytest.FixtureRequest) -> Iterator:
     """Opens emulated phones: phone(at=INSIDE) → Page. Each phone is its own browser profile."""
     contexts: list[BrowserContext] = []
+    violations: list[str] = []
 
     def open_phone(at: dict = INSIDE) -> Page:
         context = browser.new_context(
@@ -184,6 +218,7 @@ def phone(browser: Browser, playwright: Playwright, request: pytest.FixtureReque
         )
         # English UI, whatever the laptop's language.
         context.add_init_script("localStorage.setItem('introchat.language', 'en')")
+        watch_csp(context, violations)
         contexts.append(context)
         return context.new_page()
 
@@ -196,6 +231,8 @@ def phone(browser: Browser, playwright: Playwright, request: pytest.FixtureReque
                 RESULTS.mkdir(exist_ok=True)
                 page.screenshot(path=str(RESULTS / f"{request.node.name}-phone{number}.png"), full_page=True)
         context.close()
+    if violations:
+        pytest.fail("Content-Security-Policy blocked something:\n" + "\n".join(violations))
 
 
 # --------------------------------------------------------------------------

@@ -18,11 +18,16 @@ import {
   sendChatRequest,
 } from '../people/api'
 import { PeopleListView } from '../people/PeopleListView'
+import { blockPerson, type ReportReason, reportPerson, type SafetyTarget } from '../safety/api'
+import { SafetyDialog } from '../safety/SafetyDialog'
 import { RequestListView } from '../requests/RequestListView'
-import { continueFree, endMySession, type SessionState } from './api'
+import { isCancelled, usePayment } from '../payments/usePayment'
+import { continueFree, continueWithCredit, endMySession, type SessionState } from './api'
+import { sessionOptions } from './options'
 import { SessionPopup } from './SessionPopup'
 import { awaySecondsLeft, timerAt } from './timer'
 import { TimerChip } from './TimerChip'
+import type { ConversationSummary } from '../people/types'
 import type { SessionOption } from './types'
 import { useLiveChannels } from './useLiveChannels'
 import { PushPrompt } from './PushPrompt'
@@ -37,6 +42,19 @@ interface SessionHomeProps {
   onRefresh: () => void
 }
 
+interface SafetyOpen {
+  mode: 'block' | 'report'
+  target: SafetyTarget
+  handle: string
+}
+
+type SafetyRequest =
+  | { mode: 'block'; target: SafetyTarget }
+  | { mode: 'report'; target: SafetyTarget; reason: ReportReason; note: string }
+
+// How long the "Reported" / "Blocked" confirmation stays.
+const SAFETY_DONE_MS = 6000
+
 // How long "Leave" waits for the confirming second tap.
 const LEAVE_CONFIRM_MS = 4000
 
@@ -48,7 +66,8 @@ const LEAVE_CONFIRM_MS = 4000
 export function SessionHome({ userId, state, onState, onRefresh }: SessionHomeProps) {
   const { t } = useTranslation()
   const client = useQueryClient()
-  usePresenceLoop(state, onState)
+  // A ban or an ended session refuses the heartbeat: re-read the session to show why.
+  usePresenceLoop(state, onState, onRefresh)
   useLiveChannels(userId, state.venueId)
   const isDesktop = useMediaQuery(DESKTOP_QUERY)
   const now = useNow()
@@ -58,6 +77,9 @@ export function SessionHome({ userId, state, onState, onRefresh }: SessionHomePr
   const [warningClosedFor, setWarningClosedFor] = useState<number | null>(null)
   const [confirmLeave, setConfirmLeave] = useState(false)
   const [openId, setOpenId] = useState<string | null>(null)
+  // The block / report dialog, and the confirmation shown after it.
+  const [safety, setSafety] = useState<SafetyOpen | null>(null)
+  const [safetyDone, setSafetyDone] = useState<'blocked' | 'reported' | null>(null)
 
   const people = useQuery({ queryKey: PEOPLE_KEY, queryFn: getPeople })
   const requests = useQuery({ queryKey: REQUESTS_KEY, queryFn: getRequests })
@@ -85,6 +107,22 @@ export function SessionHome({ userId, state, onState, onRefresh }: SessionHomePr
   })
 
   const extend = useMutation({ mutationFn: continueFree, onSuccess: onState })
+  const useScan = useMutation({ mutationFn: continueWithCredit, onSuccess: onState })
+  // Paying to continue or subscribing: the session is re-fetched when the
+  // server has applied it (usePayment), and the server's notice confirms it.
+  const pay = usePayment()
+  const safetyAction = useMutation({
+    mutationFn: async (request: SafetyRequest) => {
+      if (request.mode === 'block') await blockPerson(request.target)
+      else await reportPerson(request.target, request.reason, request.note)
+    },
+    onSuccess: (_data, request) => {
+      setSafety(null)
+      setOpenId(null)
+      setSafetyDone(request.mode === 'block' ? 'blocked' : 'reported')
+      refetchLists()
+    },
+  })
   const leave = useMutation({ mutationFn: endMySession, onSuccess: onState })
   const timer = timerAt(state, now)
   const away = awaySecondsLeft(state, now)
@@ -97,6 +135,12 @@ export function SessionHome({ userId, state, onState, onRefresh }: SessionHomePr
     const id = window.setInterval(onRefresh, 5000)
     return () => window.clearInterval(id)
   }, [finalExpired, onRefresh])
+
+  useEffect(() => {
+    if (!safetyDone) return
+    const id = window.setTimeout(() => setSafetyDone(null), SAFETY_DONE_MS)
+    return () => window.clearTimeout(id)
+  }, [safetyDone])
 
   useEffect(() => {
     if (!confirmLeave) return
@@ -118,19 +162,54 @@ export function SessionHome({ userId, state, onState, onRefresh }: SessionHomePr
     personList.some((p) => p.chatState !== 'none') ||
     chatList.length > 0
 
-  // Payments are off (V1 default): continue free, subscription "coming soon".
-  // With payments on, the paid options arrive in M5; until then only Log out.
-  const options: SessionOption[] = state.paymentsEnabled
-    ? []
-    : [
-        { kind: 'continue_free', minutes: state.continueFreeMinutes },
-        { kind: 'subscribe_coming_soon' },
-      ]
+  const openSafety = (mode: 'block' | 'report', target: SafetyTarget, handle: string) => {
+    safetyAction.reset()
+    setSafety({ mode, target, handle })
+  }
+  const fromPeople = (mode: 'block' | 'report') => (sessionId: string) => {
+    const person = personList.find((p) => p.sessionId === sessionId)
+    if (person) openSafety(mode, { sessionId }, person.handle)
+  }
+  const chatPanel = (conversation: ConversationSummary, onBack?: () => void) => (
+    <ChatPanel
+      key={conversation.id}
+      conversation={conversation}
+      onBack={onBack}
+      onReport={() =>
+        openSafety('report', { conversationId: conversation.id }, conversation.partnerHandle)
+      }
+      onBlock={() =>
+        openSafety('block', { conversationId: conversation.id }, conversation.partnerHandle)
+      }
+    />
+  )
+
+  const choosing = extend.isPending || useScan.isPending || pay.isPending
+  const choiceError = extend.error ?? useScan.error ?? (isCancelled(pay.error) ? null : pay.error)
+  const choose = (option: SessionOption) => {
+    switch (option.kind) {
+      case 'continue_free':
+        return extend.mutate()
+      case 'use_scan':
+        return useScan.mutate()
+      case 'continue_paid':
+        return pay.mutate({ purpose: 'continue', entry: null })
+      case 'subscribe':
+        return pay.mutate({ purpose: 'subscription', entry: null })
+      case 'subscribe_coming_soon':
+        return undefined
+    }
+  }
   const showWarning =
     timer.phase === 'running' && timer.warning && warningClosedFor !== state.expiresAt.getTime()
 
   const header = (
     <div className="flex shrink-0 items-center gap-2">
+      {state.scanCredits > 0 && (
+        <span className="rounded-full bg-violet-50 px-2.5 py-1 text-xs font-semibold text-violet-800">
+          {t('session.scansLeft', { count: state.scanCredits })}
+        </span>
+      )}
       <TimerChip
         secondsLeft={timer.secondsLeft}
         warning={timer.phase === 'final' || timer.warning}
@@ -161,10 +240,15 @@ export function SessionHome({ userId, state, onState, onRefresh }: SessionHomePr
         </p>
       )}
       <PushPrompt sessionId={state.sessionId} relevant={requestsStarted} />
-      <ErrorText error={extend.error ?? leave.error ?? sayHi.error ?? answer.error ?? listError} />
+      {safetyDone && (
+        <p role="status" className="rounded-lg bg-emerald-50 px-3 py-2 text-sm text-emerald-900">
+          {safetyDone === 'blocked' ? t('safety.blocked') : t('safety.reported')}
+        </p>
+      )}
+      <ErrorText error={leave.error ?? sayHi.error ?? answer.error ?? listError} />
 
       {open && !isDesktop ? (
-        <ChatPanel conversation={open} onBack={() => setOpenId(null)} />
+        chatPanel(open, () => setOpenId(null))
       ) : (
         <GuestHomeView
           venueName={state.venueName}
@@ -173,7 +257,7 @@ export function SessionHome({ userId, state, onState, onRefresh }: SessionHomePr
           requestCount={requests.data?.length ?? 0}
           unreadCount={unread}
           timer={header}
-          detail={isDesktop ? open && <ChatPanel key={open.id} conversation={open} /> : undefined}
+          detail={isDesktop ? open && chatPanel(open) : undefined}
         >
           {tab === 'people' && (
             <PeopleListView
@@ -186,6 +270,8 @@ export function SessionHome({ userId, state, onState, onRefresh }: SessionHomePr
               onOpenChat={(sessionId) =>
                 openChat(personList.find((p) => p.sessionId === sessionId)?.conversationId ?? null)
               }
+              onReport={fromPeople('report')}
+              onBlock={fromPeople('block')}
             />
           )}
           {tab === 'requests' && (
@@ -204,15 +290,29 @@ export function SessionHome({ userId, state, onState, onRefresh }: SessionHomePr
         <SessionPopup
           variant={timer.phase === 'final' ? 'final' : 'warning'}
           secondsLeft={timer.secondsLeft}
-          options={options}
-          onChoose={(option) => {
-            if (option.kind === 'continue_free') extend.mutate()
-          }}
+          options={sessionOptions(state)}
+          busy={choosing}
+          error={choiceError}
+          onChoose={choose}
           onDismiss={() =>
             timer.phase === 'final'
               ? leave.mutate()
               : setWarningClosedFor(state.expiresAt.getTime())
           }
+        />
+      )}
+
+      {safety && (
+        <SafetyDialog
+          mode={safety.mode}
+          handle={safety.handle}
+          busy={safetyAction.isPending}
+          error={safetyAction.error}
+          onBlock={() => safetyAction.mutate({ mode: 'block', target: safety.target })}
+          onReport={(reason, note) =>
+            safetyAction.mutate({ mode: 'report', target: safety.target, reason, note })
+          }
+          onCancel={() => setSafety(null)}
         />
       )}
     </div>

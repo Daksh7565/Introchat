@@ -16,11 +16,11 @@ describe('LanguagePicker', () => {
 
     await user.selectOptions(screen.getByLabelText('Language'), 'gu')
 
+    // The label itself turns Gujarati once gu.json has been fetched.
+    expect(await screen.findByLabelText('ભાષા')).toBeInTheDocument()
     expect(i18n.language).toBe('gu')
     expect(document.documentElement.lang).toBe('gu')
     expect(window.localStorage.getItem('introchat.language')).toBe('gu')
-    // The label itself is now Gujarati.
-    expect(screen.getByLabelText('ભાષા')).toBeInTheDocument()
   })
 
   it('shows every language in its own script', () => {

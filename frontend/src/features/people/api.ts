@@ -20,22 +20,12 @@ function toChatState(value: string): ChatState {
   return state
 }
 
-// Declared here rather than taken from database.types.ts: generated types mark
-// every result column non-null, but request_id / conversation_id often are null.
-interface PersonRow {
-  session_id: string
-  handle: string
-  tags: string[]
-  shared_tags: string[]
-  online: boolean
-  chat_state: string
-  request_id: string | null
-  conversation_id: string | null
-}
-
 /** Everyone else at the guest's venue right now, best matches first. */
 export async function getPeople(): Promise<Person[]> {
-  const rows = unwrap(await supabase.rpc('get_people')) as PersonRow[]
+  // Generated types mark every column non-null; request_id and
+  // conversation_id are really NULL unless a request / chat exists, and the
+  // Person fields are typed that way.
+  const rows = unwrap(await supabase.rpc('get_people'))
   return rows.map((row) => ({
     sessionId: row.session_id,
     handle: row.handle,
@@ -62,9 +52,7 @@ export async function getRequests(): Promise<IncomingRequest[]> {
 
 /** "Say hi". Returns the conversation if the two are already chatting. */
 export async function sendChatRequest(sessionId: string): Promise<string | null> {
-  const rows = unwrap(
-    await supabase.rpc('send_chat_request', { p_target_session_id: sessionId }),
-  ) as { request_id: string | null; conversation_id: string | null }[]
+  const rows = unwrap(await supabase.rpc('send_chat_request', { p_target_session_id: sessionId }))
   return rows[0]?.conversation_id ?? null
 }
 
@@ -75,6 +63,6 @@ export async function respondChatRequest(
 ): Promise<string | null> {
   const rows = unwrap(
     await supabase.rpc('respond_chat_request', { p_request_id: requestId, p_accept: accept }),
-  ) as { conversation_id: string | null }[]
+  )
   return rows[0]?.conversation_id ?? null
 }

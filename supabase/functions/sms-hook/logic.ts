@@ -42,7 +42,15 @@ export function verifyAndParse(rawBody: string, headers: Headers, secret: string
   return { phone, otp }
 }
 
-/** The SMS text. Short, says what it is for, warns against sharing. */
+/**
+ * The SMS text. Short, says what it is for, warns against sharing.
+ *
+ * English only, deliberately (decided in M9): the one guest-facing text not in
+ * the translation files. The server does not know the guest's language before
+ * they log in, the code itself reads the same in any language, and a Hindi or
+ * Gujarati SMS fits ~70 characters instead of 160, so each code would cost two
+ * SMS against SMS_DAILY_CAP.
+ */
 export function otpMessage(otp: string): string {
   return `${otp} is your IntroChat code. It expires in 5 minutes. Do not share it with anyone.`
 }

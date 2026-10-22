@@ -4,6 +4,8 @@ node_modules/
 # Build output
 dist/
 dev-dist/
+# Local wrangler dev state (serving dist/ to test the CSP)
+.wrangler/
 *.tsbuildinfo
 
 # Test output

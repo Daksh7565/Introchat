@@ -61,28 +61,28 @@ select throws_ok($$select * from public.my_profile()$$, 'P0001', 'NOT_A_GUEST', 
 
 do $$ begin perform pg_temp.act_as('00000000-0000-4000-8000-0000000000b1'); end $$;
 select is((select profile_complete from public.my_profile()), false, 'a new guest''s profile is not complete');
-select throws_ok($$select public.update_profile(1995, null, null, 'en')$$, 'P0001', 'CONSENT_REQUIRED',
+select throws_ok($$select public.update_profile(1995, 'en')$$, 'P0001', 'CONSENT_REQUIRED',
   'the profile cannot be filled before consent');
 select throws_ok($$select public.accept_consent('v0-old')$$, 'P0001', 'CONSENT_VERSION_OUTDATED',
   'consent to an outdated notice is refused');
 select lives_ok($$select public.accept_consent('v1-draft')$$, 'consent to the current notice is recorded');
-select is(public.update_profile(1995, '  Asha  ', 'female', 'gu'), 'ok', 'an adult profile is saved');
+select is(public.update_profile(1995, 'gu', '  Asha  ', 'female'), 'ok', 'an adult profile is saved');
 select is((select nickname from public.profiles where id = '00000000-0000-4000-8000-0000000000b1'), 'Asha',
   'the nickname is trimmed');
-select throws_ok($$select public.update_profile(2001, null, null, 'en')$$, 'P0001', 'BIRTH_YEAR_LOCKED',
+select throws_ok($$select public.update_profile(2001, 'en')$$, 'P0001', 'BIRTH_YEAR_LOCKED',
   'the birth year cannot be changed once set');
-select throws_ok($$select public.update_profile(1995, null, 'robot', 'en')$$, 'P0001', 'PROFILE_INVALID',
+select throws_ok($$select public.update_profile(1995, 'en', null, 'robot')$$, 'P0001', 'PROFILE_INVALID',
   'an unknown gender value is refused');
 select is((select handle from public.profiles where id = '00000000-0000-4000-8000-0000000000b1'),
   (select handle from b1_handle), 'the handle never changes');
 
 do $$ begin perform pg_temp.act_as('00000000-0000-4000-8000-0000000000b2'); end $$;
 select lives_ok($$select public.accept_consent('v1-draft')$$, 'second guest consents');
-select is(public.update_profile(extract(year from now())::integer - 10, null, null, 'en'), 'under_age',
+select is(public.update_profile(extract(year from now())::integer - 10, 'en'), 'under_age',
   'a guest under 18 is told so');
 select is((select age_blocked from public.profiles where id = '00000000-0000-4000-8000-0000000000b2'), true,
   'the refusal is recorded, not just raised');
-select throws_ok($$select public.update_profile(1990, null, null, 'en')$$, 'P0001', 'AGE_BLOCKED',
+select throws_ok($$select public.update_profile(1990, 'en')$$, 'P0001', 'AGE_BLOCKED',
   'an age-blocked guest cannot try another year');
 
 -- Tags --------------------------------------------------------------------------------

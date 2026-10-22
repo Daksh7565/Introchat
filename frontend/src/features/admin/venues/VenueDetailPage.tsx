@@ -3,6 +3,7 @@ import { type ReactNode, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useParams } from 'react-router'
 import { ErrorText } from '../../../components/ErrorText'
+import { ClosePanel, LiveGuestsPanel } from '../ops/VenueOps'
 import { TablesSection } from '../tables/TablesSection'
 import {
   adminKeys,
@@ -48,6 +49,12 @@ export function VenueDetailPage() {
 
       <div className="grid gap-6 lg:grid-cols-2">
         <div className="flex flex-col gap-6">
+          <Section title={t('admin.live.title')}>
+            <LiveGuestsPanel venueId={venue.data.id} />
+          </Section>
+          <Section title={t('admin.close.title')}>
+            <ClosePanel venueId={venue.data.id} closedUntil={venue.data.closedUntil} />
+          </Section>
           <Section title={t('admin.status.title')}>
             {/* key: re-mount after a save so local state starts from the new data */}
             <StatusPanel key={String(venue.data.isActive)} venue={venue.data} />

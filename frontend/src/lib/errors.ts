@@ -86,6 +86,38 @@ const KNOWN_CODES = [
   'CONVERSATION_READ_ONLY',
   'CONVERSATION_NOT_FOUND',
   'MESSAGE_INVALID',
+  // Payments (migration payments_credits, payments-* Edge Functions, Checkout)
+  'NO_CREDITS',
+  'PAYMENT_NOT_NEEDED',
+  'PAYMENT_INVALID',
+  'PAYMENT_NOT_FOUND',
+  'PAYMENT_PROVIDER_UNAVAILABLE',
+  'PAYMENTS_NOT_CONFIGURED',
+  'PAYMENT_CANCELLED',
+  'PAYMENT_CONFIRMING',
+  'PAYMENT_NOT_REFUNDABLE',
+  'NOT_SIGNED_IN',
+  // Admin settings editor
+  'SETTING_NOT_EDITABLE',
+  'UNKNOWN_SETTING',
+  // Safety (migration safety)
+  'REPORT_NOT_FOUND',
+  'REPORT_ALREADY_RESOLVED',
+  'BAN_NOT_FOUND',
+  'TAG_NOT_FOUND',
+  // Console operations (migration console_ops) and admin passwords
+  'VENUE_NOT_CLOSED',
+  'ADMIN_LOGIN_NOT_FOUND',
+  'ADMIN_EXISTS',
+  'ADMIN_SELF',
+  'ADMIN_NOT_FOUND',
+  'LAST_ADMIN',
+  'DELETION_NOT_REQUESTED',
+  'DELETION_NOT_PENDING',
+  'PASSWORD_TOO_SHORT',
+  'PASSWORD_MISMATCH',
+  'PASSWORD_WEAK',
+  'PASSWORD_SAME',
 ] as const
 export type KnownErrorCode = (typeof KNOWN_CODES)[number]
 
@@ -142,6 +174,8 @@ const AUTH_CODE_MAP: Record<string, KnownErrorCode> = {
   otp_expired: 'OTP_INVALID',
   over_sms_send_rate_limit: 'RATE_LIMITED',
   sms_send_failed: 'SMS_SEND_FAILED',
+  weak_password: 'PASSWORD_WEAK',
+  same_password: 'PASSWORD_SAME',
   email_not_confirmed: 'INVALID_CREDENTIALS',
   user_banned: 'FORBIDDEN',
   mfa_verification_failed: 'MFA_CODE_INVALID',

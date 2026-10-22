@@ -1,0 +1,390 @@
+{
+  "title": "Admin Console",
+  "loading": "Checking your access…",
+  "retry": "Try again",
+  "auth": {
+    "title": "Admin sign in",
+    "email": "Email",
+    "password": "Password",
+    "signIn": "Sign in",
+    "signingIn": "Signing in…",
+    "signOut": "Sign out"
+  },
+  "mfa": {
+    "setupTitle": "Set up 2-step verification",
+    "setupBody": "Admin access needs a code from an authenticator app (Google Authenticator, Microsoft Authenticator…) every time you sign in.",
+    "start": "Set up authenticator",
+    "starting": "Preparing…",
+    "scan": "Scan this QR code with your authenticator app, then enter the 6-digit code it shows.",
+    "manualKey": "Can't scan? Enter this key:",
+    "codeLabel": "6-digit code",
+    "verify": "Verify",
+    "verifying": "Checking…",
+    "verifyTitle": "Enter your verification code",
+    "verifyBody": "Open your authenticator app and enter the 6-digit code for IntroChat."
+  },
+  "notAdmin": {
+    "title": "No admin access",
+    "body": "{{email}} is not an IntroChat admin. Ask an existing admin to give you access."
+  },
+  "home": {
+    "signedInAs": "Signed in as {{email}}",
+    "venuesNext": "Venue and table management arrives in the next update."
+  },
+  "saving": "Saving…",
+  "venues": {
+    "title": "Venues",
+    "new": "New venue",
+    "create": "Create venue",
+    "empty": "No venues yet. Create the first one.",
+    "active": "Active",
+    "inactive": "Inactive",
+    "tables_one": "{{count}} active table",
+    "tables_other": "{{count}} active tables"
+  },
+  "venue": {
+    "detailsTitle": "Details",
+    "name": "Name",
+    "slug": "Link name",
+    "slugHelp": "Lower-case letters, numbers and hyphens. Part of every QR link of this venue.",
+    "slugLocked": "Fixed: it is inside every printed QR card of this venue.",
+    "type": "Type",
+    "types": {
+      "restaurant": "Restaurant",
+      "cafe": "Café"
+    },
+    "address": "Address",
+    "city": "City",
+    "problems": {
+      "nameRequired": "Enter the venue's name.",
+      "slugRequired": "Enter a link name.",
+      "slugFormat": "Use 3–40 lower-case letters, numbers and hyphens, with no hyphen at the start or end.",
+      "addressRequired": "Enter the address.",
+      "cityRequired": "Enter the city."
+    }
+  },
+  "pin": {
+    "title": "Location pin",
+    "searchLabel": "Search address",
+    "searchPlaceholder": "Search an address or place",
+    "search": "Search",
+    "noResults": "No places found. Try a shorter search, or drag the pin.",
+    "coordinates": "Pin: {{latitude}}, {{longitude}}",
+    "dragHint": "Drag the pin or tap the map to move it.",
+    "fromPhoneHelp": "At the venue: stand in the middle of the seating area and keep the phone still.",
+    "fromPhone": "Set pin from my phone here (30 s)",
+    "collecting_one": "Hold still… {{seconds}}s · {{count}} reading",
+    "collecting_other": "Hold still… {{seconds}}s · {{count}} readings",
+    "fromPhoneDone_one": "Pin set from {{count}} precise reading (best ±{{accuracy}} m). Check it on the map, then save.",
+    "fromPhoneDone_other": "Pin set from {{count}} precise readings (best ±{{accuracy}} m). Check it on the map, then save.",
+    "fromPhoneImprecise": "No precise reading here (best ±{{accuracy}} m). Location may be weak at this venue: try near a window, and note it.",
+    "outsideIndia": "The pin must be in India. Check that it is on the right place.",
+    "notPlaced": "Place the pin on the venue: search its address, tap the map, or set it from your phone there.",
+    "locating": "Finding this device's location…",
+    "useDevice": "Use this device's location",
+    "locatedPrecise": "Pin placed at this device's location (±{{accuracy}} m). Check it on the map and drag it if needed.",
+    "locatedRough": "This device's location is rough (±{{accuracy}} m), so the pin may be off. Drag it to the exact spot, or set it from a phone at the venue.",
+    "save": "Save pin",
+    "undo": "Undo"
+  },
+  "test": {
+    "title": "On-site test",
+    "help": "Walk around with this phone: to each table, the door and outside. You see live what a guest standing here would get.",
+    "start": "Start live test",
+    "stop": "Stop test",
+    "states": {
+      "inside": "INSIDE: a guest here can join",
+      "outside": "OUTSIDE: a guest here is refused",
+      "unknown": "UNKNOWN: location not precise enough here"
+    },
+    "numbers": "{{distance}} m from pin · accuracy ±{{accuracy}} m · radius {{radius}} m · max accuracy {{maxAccuracy}} m",
+    "live": "Updating as you move…"
+  },
+  "settings": {
+    "title": "Rules for this venue",
+    "global": "Default: {{value}}",
+    "range": "allowed {{min}}–{{max}}",
+    "useGlobal": "Use default",
+    "on": "On",
+    "off": "Off",
+    "save": "Save",
+    "clear": "Use default"
+  },
+  "status": {
+    "title": "Status",
+    "activeHelp": "Active: guests can scan this venue's QR codes.",
+    "inactiveHelp": "Inactive: QR codes show \"not active\". Add tables and check the pin, then activate.",
+    "activate": "Activate venue",
+    "deactivate": "Deactivate venue"
+  },
+  "tables": {
+    "title": "Tables and QR cards",
+    "empty": "No tables yet.",
+    "addTitle": "Add tables",
+    "fields": {
+      "prefix": "Prefix",
+      "from": "From",
+      "to": "To",
+      "pad": "Digits"
+    },
+    "preview_one": "{{count}} table: {{first}}",
+    "preview_other": "{{count}} tables: {{first}} … {{last}}",
+    "invalidRange": "Enter a range of 1 to {{max}} tables.",
+    "add_one": "Add {{count}} table",
+    "add_other": "Add {{count}} tables",
+    "label": "Table name",
+    "active": "Active",
+    "card": "QR card",
+    "regenerate": "New QR",
+    "regenerateConfirm": "Make a new QR for {{label}}? Its printed card stops working immediately and must be replaced.",
+    "downloadPdf_one": "Download QR cards (PDF, {{count}} table)",
+    "downloadPdf_other": "Download QR cards (PDF, {{count}} tables)",
+    "buildingPdf": "Preparing PDF…",
+    "urlWarning": {
+      "local": "These cards point to {{url}}, which guests' phones cannot open. Use them only for testing.",
+      "temporary": "These cards point to the temporary address {{url}}. Reprint them after the final domain is set up."
+    }
+  },
+  "nav": {
+    "venues": "Venues",
+    "payments": "Payments",
+    "guests": "Guests",
+    "settings": "Settings",
+    "reports": "Reports",
+    "bans": "Bans",
+    "tags": "Tags",
+    "flags": "Location flags",
+    "deletions": "Deletions",
+    "stats": "Stats",
+    "sms": "SMS",
+    "audit": "Audit log",
+    "admins": "Admins"
+  },
+  "payments": {
+    "title": "Payments",
+    "filter": "Show",
+    "all": "All",
+    "statuses": {
+      "created": "Started",
+      "paid": "Paid",
+      "failed": "Failed",
+      "refunded": "Refunded"
+    },
+    "purposes": {
+      "scan_fee": "Entry fee",
+      "continue": "Continue",
+      "subscription": "Subscription"
+    },
+    "refundHelp": "Refund in the Razorpay dashboard first, then record it here.",
+    "empty": "No payments.",
+    "deletedGuest": "Deleted account",
+    "refundedNote": "Refunded: {{note}}",
+    "markRefunded": "Record refund",
+    "refundNote": "Reason (kept in the audit log)",
+    "subscriptionRefundHelp": "The scans this subscription bought that are still unused are removed.",
+    "confirmRefund": "Record refund",
+    "cancel": "Cancel"
+  },
+  "guests": {
+    "title": "Guests",
+    "handle": "Handle",
+    "find": "Find",
+    "notFound": "No guest with that handle.",
+    "scans_one": "{{count}} scan",
+    "scans_other": "{{count}} scans",
+    "joined": "joined {{date}}",
+    "lastVisit": "last visit {{date}}",
+    "grantScans": "Scans to give",
+    "reason": "Reason (kept in the audit log)",
+    "grant": "Give scans",
+    "granted_one": "Done. They now have {{count}} scan.",
+    "granted_other": "Done. They now have {{count}} scans."
+  },
+  "globalSettings": {
+    "title": "Settings",
+    "help": "Defaults for every venue. A venue can override some of them on its own page. Every change is recorded in the audit log.",
+    "overridable": "· a venue can override this",
+    "locked": "changes only with an app update"
+  },
+  "reports": {
+    "title": "Reports",
+    "statuses": {
+      "open": "Open",
+      "actioned": "Actioned",
+      "dismissed": "Dismissed"
+    },
+    "empty": "No reports.",
+    "reasons": {
+      "harassment": "Harassment",
+      "spam": "Spam",
+      "inappropriate": "Inappropriate",
+      "other": "Other"
+    },
+    "by": "reported by {{handle}}",
+    "liveNow": "in a session now",
+    "showEvidence": "Show evidence",
+    "hideEvidence": "Hide evidence",
+    "evidenceErased": "The evidence was erased after its retention period.",
+    "noChat": "They never chatted: reported from the people list.",
+    "reporter": "Reporter",
+    "decisions": {
+      "dismiss": "Dismiss",
+      "kick": "Kick (12 h)",
+      "ban": "Ban"
+    },
+    "banDays_one": "Ban {{count}} day",
+    "banDays_other": "Ban {{count}} days",
+    "banPermanent": "Ban permanently",
+    "kickHelp": "Ends their visit at this venue (if any) and keeps them out of it for 12 hours.",
+    "banHelp": "Ends their visit and keeps their account, phone and device out of every venue.",
+    "confirm": "Confirm"
+  },
+  "bans": {
+    "title": "Bans",
+    "activeOnly": "Active only",
+    "empty": "No bans.",
+    "venueScope": "kicked from {{venue}}",
+    "platformScope": "banned everywhere",
+    "permanent": "Permanent",
+    "until": "until {{date}}",
+    "liftedOn": "lifted {{date}}",
+    "lift": "Lift ban",
+    "banByHandle": "Ban a guest by handle",
+    "length": "Length",
+    "ban": "Ban"
+  },
+  "tags": {
+    "title": "Tags and blocked words",
+    "search": "Search tags",
+    "users_one": "{{count}} guest",
+    "users_other": "{{count}} guests",
+    "block": "Block",
+    "unblock": "Unblock",
+    "blockedWords": "Blocked words",
+    "blockedWordsHelp": "New interests containing one of these words are refused. Block a tag already in use above.",
+    "addWord": "Add word",
+    "removeWord": "Remove {{word}}"
+  },
+  "live": {
+    "title": "Live guests",
+    "empty": "Nobody here right now.",
+    "online": "Online",
+    "offline": "Offline",
+    "away": "Outside",
+    "timeLeft": "{{time}} left",
+    "kinds": {
+      "free": "Free",
+      "paid_scan": "Paid",
+      "subscription": "Subscription"
+    },
+    "flags_one": "{{count}} location flag",
+    "flags_other": "{{count}} location flags",
+    "kick": "Kick",
+    "kickTitle": "Kick {{handle}}"
+  },
+  "close": {
+    "title": "Close for today",
+    "help": "Ends every visit here and refuses scans until midnight (venue time).",
+    "closedUntil": "Closed until {{date}}.",
+    "close": "Close for today",
+    "reopen": "Reopen now",
+    "confirmHelp": "Everyone here is logged out. Paid visits are listed afterwards so you can refund them.",
+    "noPaid": "No paid visits were cut short.",
+    "paidAffected_one": "{{count}} paid visit was cut short:",
+    "paidAffected_other": "{{count}} paid visits were cut short:",
+    "refundHint": "Refund paid entries in Razorpay and record them in Payments; give subscribers their scan back in Guests."
+  },
+  "flags": {
+    "title": "Location flags",
+    "help": "Visits whose location looked faked, last 7 days. A weak GPS can trip these too: judge before acting.",
+    "empty": "No flagged visits.",
+    "types": {
+      "speed": "impossible speed",
+      "zero_accuracy": "accuracy 0 m",
+      "repeated_position": "frozen position"
+    },
+    "atStart": "At entry: {{distance}} m from the pin, accuracy ±{{accuracy}} m"
+  },
+  "stats": {
+    "title": "Stats",
+    "venue": "Venue",
+    "allVenues": "All venues",
+    "from": "From",
+    "to": "To",
+    "visits": "Visits",
+    "uniqueGuests": "Different guests",
+    "avgVisit": "Average visit",
+    "minutes_one": "{{count}} min",
+    "minutes_other": "{{count}} min",
+    "requests": "Requests accepted / sent",
+    "reports": "Reports",
+    "revenue": "Revenue (after refunds)",
+    "payments": "Payments",
+    "gender": "Guests by gender",
+    "genderSplit": "F {{female}} · M {{male}} · other {{other}} · not given {{undisclosed}}",
+    "noMessages": "Messages are not counted: chats are deleted when visits end."
+  },
+  "audit": {
+    "title": "Audit log",
+    "actors": {
+      "admin": "admin",
+      "guest": "guest",
+      "system": "system"
+    },
+    "newest": "Newest",
+    "older": "Older"
+  },
+  "sms": {
+    "title": "SMS usage",
+    "today": "Today: {{sent}} of {{cap}} login codes sent.",
+    "empty": "No login codes in the last 7 days.",
+    "day": "Day",
+    "sent": "Sent",
+    "failed": "Failed",
+    "refused": "Refused"
+  },
+  "admins": {
+    "title": "Admins",
+    "you": "you",
+    "active": "Active",
+    "inactive": "Deactivated",
+    "mfaOn": "2-step on",
+    "mfaPending": "2-step not set up yet",
+    "lastSignIn": "last sign-in {{date}}",
+    "deactivate": "Deactivate",
+    "reactivate": "Reactivate",
+    "deactivateHelp": "They lose access to the Console at once.",
+    "reactivateHelp": "They can sign in to the Console again.",
+    "add": "Add admin",
+    "addHelp": "First create their login in the Supabase dashboard (Authentication → Users → Add user), then add their email here. They set up 2-step verification at first sign-in.",
+    "added": "Added."
+  },
+  "password": {
+    "title": "Change my password",
+    "help_one": "At least {{count}} character.",
+    "help_other": "At least {{count}} characters. Use a password manager.",
+    "new": "New password",
+    "repeat": "Repeat it",
+    "save": "Change password",
+    "changed": "Password changed."
+  },
+  "deletions": {
+    "title": "Account deletions",
+    "statuses": {
+      "pending": "Waiting",
+      "completed": "Deleted",
+      "cancelled": "Cancelled"
+    },
+    "help_one": "Delete within {{count}} day of the request.",
+    "help_other": "Delete within {{count}} days of the request. Payments, reports about them and bans stay.",
+    "empty": "No requests.",
+    "requested": "asked {{date}}",
+    "deadline": "due by {{date}}",
+    "openReports_one": "{{count}} open report about them: review it first.",
+    "openReports_other": "{{count}} open reports about them: review them first.",
+    "banned": "Currently banned. The ban stays after deletion.",
+    "delete": "Delete account",
+    "confirmTitle": "Delete {{handle}}",
+    "confirmHelp": "Their profile, chats, visits and scans are deleted for good. This cannot be undone."
+  }
+}

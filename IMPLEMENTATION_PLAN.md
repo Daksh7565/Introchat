@@ -270,30 +270,30 @@ Every milestone ends with something you can click through on a real phone. All "
 - Non-subscriber deletion at session end, read-only chat when the other person leaves.
 - **Done when:** 3 phones at the demo venue see each other sorted by shared tags; request → accept → chat works in en/hi/gu + emoji; decline/expiry behave as specified; a locked Android phone (and an iPhone with the app on the home screen) gets a notification; when one guest leaves, the other sees the chat as read-only, and after their own session ends it is gone.
 
-### M5 — Payments and subscription (behind switches)
+### M5 — Payments and subscription (behind switches) *(built 2026-10-22: migration payments_credits, Edge Functions payments-create / -verify / -webhook, guest payment screens, Console payments / guests / settings; deployed to dev with payments OFF. Live Razorpay test-mode run pending the test keys)*
 - Migration 0006; `payments-create`, `payments-verify`, `payments-webhook`; Razorpay Checkout in the app.
 - Scan fee at entry, ₹19 continue, ₹400 subscription (+25 credits), upgrade mid-session (2 h from block start), continue with a credit, free resume, payment grace in the final prompt, unused-fee handling, subscriber history retention.
 - Admin: payments list, mark refunded, grant scans, switch editor.
 - **Done when (Razorpay test mode):** with switches off nothing asks for money; with switches on every paid path works and the verify call and the webhook never double-apply; a subscriber keeps chat history across visits and loses it when credits hit 0; turning the switches on/off needs no code change.
 
-### M6 — Safety
+### M6 — Safety *(phases 1–3 built 2026-10-22: migrations safety, ban_days_default; guest Block / Report; Console Reports, Bans, Tags; database on dev. Frontend deploy and the 2-phone test pending)*
 - Migration 0007: block, report (with evidence, also from read-only chats), kick (admin), platform ban (+ Supabase Auth ban), spoof flags, blocked tags, evidence cleanup.
 - **Done when:** blocked users are invisible both ways; a report after the other person left still contains the evidence; a kicked user can't rejoin that restaurant for 12 h; a banned phone can't log in or enter anywhere.
 
-### M7 — Admin Console complete
+### M7 — Admin Console complete *(phases 1–3 built 2026-10-22: migrations console_ops, stats_venue_default; Console live guests, close for today, location flags, stats, audit log, SMS usage, admins, change password, account deletions; guest Delete my account; database on dev. Frontend deploy and the admin walkthrough pending)*
 - Live guests, close for today (with the affected-paid-sessions list), reports queue, bans, users (credits, deletion requests), stats, audit log, SMS usage, spoof flags, admin management.
 - **Done when:** a new restaurant can be onboarded and operated entirely from the Console, with no database access.
 
-### M8 — Hardening and pilot launch
-- Security pass: RLS deny-all test, every `SECURITY DEFINER` function reviewed (`search_path`, `auth.uid()` checks), Edge Function signature checks, CSP headers on Cloudflare Pages (must allow Supabase, Sentry, `tile.openstreetmap.org` and `nominatim.openstreetmap.org` for the Console map).
-- **Guest bundle budget:** first-load JavaScript ≤ 150 KB gzipped (measured 221 KB at the end of M1, 237 KB after the M2 login and onboarding screens). Levers: load each language's translations on demand instead of all three, keep Console texts out of the guest bundle, load Sentry after first paint. Only the app shell is precached; on-demand code lives in `assets/lazy/` (vite.config.ts).
-- Privacy policy, terms, refund policy, contact/grievance page (also required by Razorpay).
-- Prod project set up, nightly backup job tested (**including a restore** into the dev project), Sentry, UptimeRobot.
+### M8 — Hardening and pilot launch *(phases 1–4 built 2026-10-22. 1: migration hardening, security_test.sql, generated DB types everywhere, push text in the translation files, CSP per build. 2: guest first load 258 → 202 KB gzipped (target 150 not reached, see below). 3: legal pages as drafts with placeholder business details. 4: nightly encrypted backup and a tested restore (BACKUP_AND_RESTORE.md). Database on dev; frontend deploy, push-send redeploy, backup secrets and the phone-hash-key decision pending)*
+- Security pass: RLS deny-all test, every `SECURITY DEFINER` function reviewed (`search_path`, `auth.uid()` checks), Edge Function signature checks, CSP headers on Cloudflare Pages (must allow Supabase, Sentry, `tile.openstreetmap.org` and `nominatim.openstreetmap.org` for the Console map, and Razorpay Checkout: `checkout.razorpay.com` script plus its frames). *Built:* `frontend/build/securityHeaders.ts` writes `dist/_headers` with the build's own Supabase project (https + wss) and Sentry host; Razorpay hosts taken from what Checkout actually loads (including its risk-detection script on `cdn.razorpay.com`). The E2E tests fail on any violation the browser reports (run them against `npx wrangler dev` serving `dist`).
+- **Guest bundle budget:** first-load JavaScript ≤ 150 KB gzipped (measured 221 KB at the end of M1, 237 KB after the M2 login and onboarding screens). Levers: load each language's translations on demand instead of all three, keep Console texts out of the guest bundle, load Sentry after first paint. Only the app shell is precached; on-demand code lives in `assets/lazy/` (vite.config.ts). *Built (M8 phase 2, 2026-10-22):* all three levers: `hi`/`gu` fetched only when chosen (7.4 KB each, the first screen waits for it so there is no English flash), Console text in `src/i18n/admin/` registered by the Console bundle, Sentry fetched after the load event through `lib/sentryClient.ts` (29.8 KB; importing `@sentry/react` directly kept all 145 KB) with errors from before then queued. **Result: 258 → 201 KB gzipped.** The 150 KB target needs more than these three levers: what is left is React DOM ~59, Supabase ~61 (of which storage ~8 is unused), react-router ~26, i18next ~12, TanStack Query ~9, app code ~25.
+- Privacy policy, terms, refund policy, contact/grievance page (also required by Razorpay). *Built:* `/privacy`, `/terms`, `/refunds`, `/contact` in en/hi/gu (lazy bundle, text in `src/i18n/legal/`), linked from home, venue landing and consent. Business details in `src/features/legal/business.json` are `[...]` placeholders; a build with `VITE_APP_ENV=production` fails until they are filled (`build/legalCheck.ts`). Pages show a draft notice until `reviewed` is set to true after legal review.
+- Prod project set up, nightly backup job tested (**including a restore** into the dev project), Sentry, UptimeRobot. *Built:* `.github/workflows/backup.yml` (needs secret `BACKUP_DB_URL` and variable `BACKUP_AGE_RECIPIENT`); restore tested into a local Supabase stack instead of over dev data (all 27 tables matched). Found by the test: a pg_dump schema lacks Realtime policies, cron jobs and migration history (so the restore builds the schema from migrations), Storage tables are not writable by `postgres` (skipped), and the Vault `phone_hash_key` is not in any dump (decision pending, see BACKUP_AND_RESTORE.md).
 - Load test: 100 simulated guests in one venue (heartbeats + chat) against dev; check Realtime connection count and DB load.
 - Buy the domain before printing QR cards (and before Razorpay live activation).
 - **Done when:** the pilot restaurant is live; the QR → location → login → chat flow works on real Android and iPhone devices; a backup has been restored successfully.
 
-### M9 — Translation review
+### M9 — Translation review *(phases 1–3 built 2026-10-22: glossary in `frontend/src/i18n/glossary.json` with a test that rules out second spellings, placeholder parity test, four more screens in the dev preview, layout sweep `e2e/test_layout.py` (every guest screen in en/hi/gu at 360 and 320 px; found and fixed buttons with no side padding). Decided: login SMS stays English. Reviewer kit (phase 3) dropped)*
 - Native-speaker review of all Hindi and Gujarati strings on real phones; fix layouts where text is longer.
 - **Done when:** both reviewers sign off.
 
@@ -317,9 +317,16 @@ Every milestone ends with something you can click through on a real phone. All "
 
 ## 10. Deploy, backups, monitoring
 
+**Razorpay, per project (dev: test mode; prod: live mode after KYC):**
+1. Dashboard → Account & Settings → Payment capture: **automatic** (otherwise payment.captured never arrives).
+2. Dashboard → Webhooks → add `https://<ref>.supabase.co/functions/v1/payments-webhook`, events **payment.captured** and **order.paid**, with a new secret.
+3. Edge Function secrets (in the git-ignored `supabase/.env`, then `npx supabase secrets set --env-file supabase/.env`): `RAZORPAY_KEY_ID`, `RAZORPAY_KEY_SECRET`, `RAZORPAY_WEBHOOK_SECRET`, `ALLOWED_ORIGINS` (the app's origins, comma-separated).
+4. Switch payments on from the Console → Settings (`PAYMENTS_ENABLED`), globally or for one venue on its page.
+
+
 | What | How |
 |---|---|
-| Frontend | **Cloudflare Workers static assets** (found in M1: `wrangler pages` now hands off to Workers and failed). Config in `frontend/wrangler.jsonc` (assets `./dist`, single-page-app fallback). **Dev:** `npm run deploy:dev` builds with `frontend/.env.dev-deploy` (committed, public values) and deploys `introchat-dev` → https://introchat-dev.introchat-frontend.workers.dev. **Prod:** a separate Worker on the real domain, set up in M8 (automatic deploys from GitHub Actions). Security headers in `frontend/public/_headers` (full CSP in M8) |
+| Frontend | **Cloudflare Workers static assets** (found in M1: `wrangler pages` now hands off to Workers and failed). Config in `frontend/wrangler.jsonc` (assets `./dist`, single-page-app fallback). **Dev:** `npm run deploy:dev` builds with `frontend/.env.dev-deploy` (committed, public values) and deploys `introchat-dev` → https://introchat-dev.introchat-frontend.workers.dev. **Prod:** a separate Worker on the real domain, set up in M8 (automatic deploys from GitHub Actions). Security headers, CSP included, generated into `dist/_headers` by `frontend/build/securityHeaders.ts` |
 | Tests (CI) | `.github/workflows/tests.yml` on every PR and push to `main`: frontend typecheck, lint, format, unit tests, build; then pgTAP on dev, after checking dev has every migration in the branch (`db push --dry-run` must report `upToDate`). Needs repo secret `SUPABASE_ACCESS_TOKEN` and repo variable `SUPABASE_DEV_PROJECT_REF` |
 | Database + Edge Functions | GitHub Action: on merge to `main`, `supabase db push` + `supabase functions deploy` to **dev** automatically, then to **prod** after a manual approval |
 | Secrets | Edge Function secrets per project (Razorpay, webhook, SMS gateway, VAPID, hook secret); Vault for the phone-hash key; Cloudflare Pages env vars for the public keys (Supabase URL + anon key, Razorpay key id, VAPID public key) and `VITE_PUBLIC_APP_URL`, the origin printed inside every QR card (validated at start-up; https only outside a local network) |

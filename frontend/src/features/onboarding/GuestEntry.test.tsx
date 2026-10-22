@@ -14,10 +14,19 @@ let session: { user: { id: string } } | null = null
 const rpc = vi.fn()
 const signInWithOtp = vi.fn()
 const verifyOtp = vi.fn()
+const invoke = vi.fn()
+const payWithCheckout = vi.fn()
+const READING = { latitude: 23.0225, longitude: 72.5714, accuracyM: 12, ageSeconds: 1 }
+vi.mock('../../lib/location', () => ({ getReading: () => Promise.resolve(READING) }))
+vi.mock('../../lib/razorpay', () => ({
+  payWithCheckout: (...args: unknown[]) => payWithCheckout(...args),
+}))
+vi.mock('../../lib/deviceId', () => ({ deviceId: () => 'device-12345678' }))
 
 vi.mock('../../lib/supabase', () => ({
   supabase: {
     rpc: (...args: unknown[]) => rpc(...args),
+    functions: { invoke: (...args: unknown[]) => invoke(...args) },
     auth: {
       onAuthStateChange: (callback: Listener) => {
         listener = callback
@@ -185,5 +194,86 @@ describe('GuestEntry — after login', () => {
     await user.click(screen.getByRole('button', { name: 'Send code' }))
     await user.type(await screen.findByLabelText('6-digit code'), '123456')
     expect(await screen.findByRole('heading', { name: 'Before you start' })).toBeInTheDocument()
+  })
+})
+
+describe('GuestEntry — paid entry', () => {
+  it('asks for payment when entry is paid, then joins with what was paid', async () => {
+    session = { user: { id: 'u9' } }
+    let joinAttempts = 0
+    rpc.mockImplementation((fn: string) => {
+      if (fn === 'my_profile') return Promise.resolve({ data: [PROFILE_ROW], error: null })
+      if (fn === 'start_session') {
+        joinAttempts += 1
+        // First refused with the server's prices; after paying, joined.
+        return Promise.resolve(
+          joinAttempts === 1
+            ? {
+                data: null,
+                error: {
+                  message: 'PAYMENT_REQUIRED',
+                  details: JSON.stringify({
+                    scan_fee_paise: 1900,
+                    scan_session_minutes: 60,
+                    subscription_on: true,
+                    subscription_price_paise: 40000,
+                    subscription_scans: 25,
+                  }),
+                  hint: '',
+                  code: 'P0001',
+                },
+              }
+            : {
+                data: null,
+                error: { message: 'TypeError: Failed to fetch', details: '', hint: '', code: '' },
+              },
+        )
+      }
+      return Promise.resolve({ data: null, error: null })
+    })
+    invoke.mockImplementation((name: string) =>
+      Promise.resolve(
+        name === 'payments-create'
+          ? {
+              data: {
+                payment_id: 'p1',
+                order_id: 'order_1',
+                amount_paise: 1900,
+                currency: 'INR',
+                purpose: 'scan_fee',
+                venue_name: 'Cafe One',
+                key_id: 'rzp_test_key',
+              },
+              error: null,
+            }
+          : { data: { status: 'applied' }, error: null },
+      ),
+    )
+    payWithCheckout.mockResolvedValue({
+      razorpay_payment_id: 'pay_1',
+      razorpay_order_id: 'order_1',
+      razorpay_signature: 'f'.repeat(64),
+    })
+    renderEntry()
+    const user = userEvent.setup()
+    await user.click(await screen.findByRole('button', { name: 'Join the chat at Cafe One' }))
+
+    expect(await screen.findByRole('heading', { name: 'Join Cafe One' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /₹19 · 60 minutes/ })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /₹400 · 25 scans/ })).toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: /₹19 · 60 minutes/ }))
+    // The table and a fresh reading go to the server; an amount never does.
+    expect(invoke).toHaveBeenCalledWith('payments-create', {
+      body: {
+        purpose: 'scan_fee',
+        slug: 'cafe-one',
+        qr_token: 'Tok',
+        device_id: 'device-12345678',
+        reading: { latitude: 23.0225, longitude: 72.5714, accuracy_m: 12, age_seconds: 1 },
+      },
+    })
+    await vi.waitFor(() => expect(joinAttempts).toBe(2))
+    expect(invoke).toHaveBeenCalledWith('payments-verify', expect.anything())
   })
 })

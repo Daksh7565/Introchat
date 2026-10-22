@@ -17,7 +17,7 @@ function LogOutButton({ loggingOut, onLogOut }: Omit<LogOutProps, 'logOutError'>
       type="button"
       disabled={loggingOut}
       onClick={onLogOut}
-      className="w-full rounded-xl border border-slate-300 py-3 font-semibold text-slate-700 disabled:text-slate-400"
+      className="w-full rounded-xl border border-slate-300 px-4 py-3 font-semibold text-slate-700 disabled:text-slate-400"
     >
       {loggingOut ? t('auth.loggingOut') : t('auth.logOut')}
     </button>

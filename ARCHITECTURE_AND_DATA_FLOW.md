@@ -516,6 +516,8 @@ broadcast user:{id} payment.applied, session.extended {expires_at}
 ```
 
 - Razorpay **auto-capture must be ON** (account setting), so `payment.captured` arrives without a manual capture.
+- *Built (M5), refinements:* `start_session` takes no `payment_id`: one function, `entry_basis()`, decides resume / free / credit / **the guest's own unused paid fee at this venue** / payment required, for both `start_session` and `prepare_payment`. Paying and then losing the connection before joining can therefore never charge twice. `apply_payment` locks profile → session → payment like everything else (§9). `payments.user_id` is set NULL, never deleted, when an account goes (accounting). `payments.raw` keeps only ids, method and status: never the payer's email or phone. The webhook answers 500 only for failures a retry can fix (database), 200 for ones it cannot (amount mismatch: logged for a person). Browsers may call payments-create / -verify only from `ALLOWED_ORIGINS`.
+- Subscriber chat history: `end_session` keeps the guest's chats when they still have scan credits; a refund that takes the balance to 0 outside a session removes them.
 - Payments stuck in `created` for 24 h → `failed` (hourly job).
 - Refunds are done in the Razorpay dashboard; the admin then marks the payment `refunded` in the Console (for a subscription refund, remaining credits are removed with a `refund_adjust` ledger entry, never below 0).
 
@@ -579,7 +581,7 @@ Not touched: payments, credit ledger, reports (evidence was copied at report tim
 - Triggers (only when the recipient is offline): chat request received, request accepted, new message, session warning, final prompt.
 - Postgres → `pg_net` → Edge Function `push-send` (VAPID, `web-push` library). 404/410 from the push service → delete that subscription.
 - Notification text never contains message content: "New message from Mango-4821", "Your time is almost up".
-- *Built (M4):* `notify()` queues the push through `queue_push()` → `pg_net` (sent only after commit) → `push-send`, which proves the caller with a shared secret generated in Vault (`push_send_secret`). "Offline" here means **the app is not on screen**: no heartbeat for 1.5 × `HEARTBEAT_INTERVAL_SECONDS` (waiting for the 90 s offline flag would miss messages right after the phone is locked). Text is in the recipient's `preferred_language`.
+- *Built (M4):* `notify()` queues the push through `queue_push()` → `pg_net` (sent only after commit) → `push-send`, which proves the caller with a shared secret generated in Vault (`push_send_secret`). "Offline" here means **the app is not on screen**: no heartbeat for 1.5 × `HEARTBEAT_INTERVAL_SECONDS` (waiting for the 90 s offline flag would miss messages right after the phone is locked). Text is in the recipient's `preferred_language`. *Changed (M8):* `push-send` sends facts only (the kind, the other guest's handle, the language, the tag) and the service worker writes the sentence from `push.notifications` in `en/hi/gu.json` (`frontend/src/i18n/pushNotification.ts`), so no user-facing text lives in an Edge Function.
 - Per project: Edge Function secrets `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT` (the app's https address); setting `PUSH_FUNCTION_URL` (empty = push off); frontend `VITE_VAPID_PUBLIC_KEY`. Each project has its own key pair.
 
 ### 4.15 Block, report, kick, ban
@@ -605,6 +607,8 @@ Not touched: payments, credit ledger, reports (evidence was copied at report tim
 2. End any live session (`banned`).
 3. Supabase Auth admin API `updateUserById(id, {ban_duration})` → refresh tokens stop working.
 4. Close the report as `actioned`.
+
+*Built (M6), decisions:* bans are enforced **in the database**: `require_guest()`, which every guest function calls first, refuses a platform-banned guest with `BANNED`. That is immediate, whatever tokens the phone still holds, so no Supabase Auth ban and no `admin-ban` Edge Function are used. Reports keep `reported_phone_hash` and `reported_handle` snapshots and survive either account's deletion (`reporter_id` / `reported_id` set NULL). Blocks are permanent (no unblock in V1). A guest may report someone they never chatted with; the evidence is then their handle and interests. Evidence is `{handle, tags, messages|null}`, `messages` being the last `REPORT_EVIDENCE_MESSAGES` the reporter could see. A kick from a report applies the 12 h venue ban even when the guest already left. New reports are announced on the private `admin` channel (admins only).
 
 **Ban check** (login hook, `start_session`):
 ```sql
@@ -894,7 +898,7 @@ A conversation with no member where `hidden_at is null` is deleted (messages cas
 | session_id | uuid | FK sessions, nullable |
 | admin_id | uuid | FK admins, nullable |
 
-Every ledger insert updates `profiles.scan_credits` in the same transaction; the `ck >= 0` on the balance makes double-spending impossible.
+Every ledger insert updates `profiles.scan_credits` in the same transaction; the `ck >= 0` on the balance makes double-spending impossible. *Built (M5):* `ledger_add()` is the only writer; a trigger refuses any other change to `scan_credits` (`SCAN_CREDITS_LEDGER_ONLY`).
 
 #### `push_subscriptions`
 | Column | Type | Notes |
@@ -1055,7 +1059,9 @@ All channels are **private**. Authorization is an RLS policy on `realtime.messag
 | Payments, credit ledger | 8 years (Indian accounting norms — confirm with a CA) | — |
 | Audit log | 2 years | purge (later) |
 | SMS log | 30 days | hourly job |
-| Account deletion request | Within 30 days, by admin action | profile fields + tags wiped, handle → `Deleted-xxxx`, Auth user deleted; `phone_hash` kept only if a ban exists |
+| Account deletion request | Within 30 days, by admin action | *Built (M7):* the guest asks (`request_account_deletion`, cancellable), an admin runs `admin_process_deletion`: the live visit ends, then the Supabase Auth login is deleted, and foreign-key cascades remove the profile, interests, visits, chats, requests, scan credits and push subscriptions. Kept by design: payments (user set NULL, for accounting), reports about them (handle and phone-hash snapshots) and bans (phone hash), so deletion never escapes a ban. The request row is kept as proof. |
+
+**Backups (M8):** nightly, encrypted with age, kept 30 days as GitHub artifacts; the restore builds the schema from the migrations and loads the data dump (BACKUP_AND_RESTORE.md). The Vault phone-hash key is in no backup; without it, restored bans stop matching.
 
 **DPDP Act 2023:** consent screen at first login (what we collect and why: phone for login and safety, location only for the presence check, interests for matching, subscribers may keep chat history, report evidence 30 days). 18+ only. Grievance contact on the website. The privacy policy, terms and refund policy need legal review before the pilot.
 

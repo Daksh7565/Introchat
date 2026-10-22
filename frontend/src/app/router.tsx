@@ -1,7 +1,7 @@
 import { createBrowserRouter, type RouteObject } from 'react-router'
 import { HomePage } from '../features/home/HomePage'
 import { LandingPage } from '../features/landing/LandingPage'
-import { AdminRoute, DevPreviewRoute } from './lazyRoutes'
+import { AdminRoute, DevPreviewRoute, LegalRoute } from './lazyRoutes'
 import { NotFoundPage } from './NotFoundPage'
 import { RootLayout } from './RootLayout'
 import { RouteErrorPage } from './RouteErrorPage'
@@ -21,6 +21,11 @@ export const router = createBrowserRouter([
       { path: '/', element: <HomePage /> },
       { path: '/v/:slug/t/:token', element: <LandingPage /> },
       { path: '/admin/*', element: <AdminRoute /> },
+      // Linked from the site and from Razorpay's merchant review; keep the paths.
+      { path: '/privacy', element: <LegalRoute page="privacy" /> },
+      { path: '/terms', element: <LegalRoute page="terms" /> },
+      { path: '/refunds', element: <LegalRoute page="refunds" /> },
+      { path: '/contact', element: <LegalRoute page="contact" /> },
       ...devRoutes,
       { path: '*', element: <NotFoundPage /> },
     ],

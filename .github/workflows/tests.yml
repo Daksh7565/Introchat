@@ -38,6 +38,19 @@ jobs:
       - run: npm test
       - run: npm run build
 
+  tools:
+    name: Tools (backup script tests, load test type check)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: frontend/.node-version
+      - run: node --test tools/backup/restore-sql.test.mjs
+      # The load test is typed against the generated database types: a schema
+      # change that breaks it fails here, not on the day it is next needed.
+      - run: npx --yes deno check --config tools/load-test/deno.json tools/load-test/load-test.ts
+
   functions:
     name: Edge Functions (type check, unit tests)
     runs-on: ubuntu-latest
@@ -53,7 +66,10 @@ jobs:
           for dir in supabase/functions/*/; do
             [ -f "$dir/deno.json" ] || continue
             echo "::group::$dir"
-            npx --yes deno check --config "$dir/deno.json" "$dir/index.ts"
+            # _shared/ has modules and tests but no index.ts of its own.
+            if [ -f "$dir/index.ts" ]; then
+              npx --yes deno check --config "$dir/deno.json" "$dir/index.ts"
+            fi
             if ls "$dir"*.test.ts >/dev/null 2>&1; then
               npx --yes deno test --config "$dir/deno.json" "$dir"
             fi

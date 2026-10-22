@@ -26,7 +26,13 @@ export function onUserNotice(client: QueryClient, event: string, payload: Payloa
     refetch(CONVERSATIONS_KEY)
     if (payload.conversation_id) refetch(messagesKey(payload.conversation_id))
     if (event === 'chat.closed') refetch(PEOPLE_KEY)
-  } else if (event.startsWith('session.')) {
+  } else if (event === 'person.removed') {
+    // A block either way: that person leaves every list at once.
+    refetch(PEOPLE_KEY)
+    refetch(REQUESTS_KEY)
+    refetch(CONVERSATIONS_KEY)
+  } else if (event.startsWith('session.') || event.startsWith('payment.')) {
+    // payment.applied: new time or scans, shown from the re-fetched session.
     refetch(LIVE_SESSION_KEY)
   }
 }

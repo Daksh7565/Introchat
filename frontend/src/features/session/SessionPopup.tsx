@@ -1,4 +1,5 @@
 import { useTranslation } from 'react-i18next'
+import { ErrorText } from '../../components/ErrorText'
 import { formatPaise } from '../../lib/format'
 import type { SessionOption } from './types'
 
@@ -8,6 +9,10 @@ interface SessionPopupProps {
   secondsLeft: number
   options: SessionOption[]
   onChoose: (option: SessionOption) => void
+  /** A choice is being carried out (a payment, a continue): buttons wait. */
+  busy?: boolean
+  /** Why the last choice failed (not shown for a closed Checkout). */
+  error?: unknown
   /** warning: close the popup (server state unchanged). final: log out now. */
   onDismiss: () => void
 }
@@ -18,6 +23,8 @@ export function SessionPopup({
   options,
   onChoose,
   onDismiss,
+  busy = false,
+  error = null,
 }: SessionPopupProps) {
   const { t, i18n } = useTranslation()
   const minutesLeft = Math.max(1, Math.ceil(secondsLeft / 60))
@@ -69,12 +76,12 @@ export function SessionPopup({
               <button
                 key={option.kind}
                 type="button"
-                disabled={comingSoon}
+                disabled={comingSoon || busy}
                 onClick={() => onChoose(option)}
                 className={
                   comingSoon
-                    ? 'rounded-xl border border-dashed border-slate-300 py-3 text-slate-500'
-                    : 'rounded-xl bg-teal-700 py-3 font-semibold text-white'
+                    ? 'rounded-xl border border-dashed border-slate-300 px-4 py-3 text-slate-500'
+                    : 'rounded-xl bg-teal-700 px-4 py-3 font-semibold text-white disabled:bg-slate-300'
                 }
               >
                 {label(option)}
@@ -86,7 +93,13 @@ export function SessionPopup({
               </button>
             )
           })}
-          <button type="button" onClick={onDismiss} className="py-2 font-semibold text-slate-600">
+          <ErrorText error={error} />
+          <button
+            type="button"
+            disabled={busy}
+            onClick={onDismiss}
+            className="py-2 font-semibold text-slate-600 disabled:text-slate-400"
+          >
             {variant === 'warning' ? t('session.options.notNow') : t('session.options.logOut')}
           </button>
         </div>

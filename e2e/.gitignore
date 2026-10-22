@@ -3,4 +3,6 @@
 __pycache__/
 .pytest_cache/
 test-results/
+# Layout sweep screenshots (test_layout.py)
+layout-screenshots/
 .auth/

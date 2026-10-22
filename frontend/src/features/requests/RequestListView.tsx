@@ -54,7 +54,7 @@ export function RequestListView({ requests, now, onAccept, onDecline }: RequestL
                 </button>
                 <button
                   type="button"
-                  className="flex-1 rounded-lg border border-slate-300 py-2 text-sm font-semibold text-slate-700"
+                  className="flex-1 rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700"
                   onClick={() => onDecline(request.id)}
                 >
                   {t('requests.decline')}

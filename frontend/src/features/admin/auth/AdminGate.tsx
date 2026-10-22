@@ -27,7 +27,7 @@ export function AdminGate({ children }: { children: (admin: { email: string }) =
         <ErrorText error={auth.error} />
         <button
           type="button"
-          className="rounded-lg border border-slate-300 py-2 font-semibold"
+          className="rounded-lg border border-slate-300 px-4 py-2 font-semibold"
           onClick={() => void auth.refetch()}
         >
           {t('admin.retry')}

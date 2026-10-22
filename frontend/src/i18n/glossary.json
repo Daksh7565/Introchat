@@ -1,0 +1,138 @@
+{
+  "_about": "One word per product term in each language (M9). 'terms' are decided: i18n.test.ts fails if any translation file uses a form listed in 'avoid'. 'open' terms are for the native-speaker reviewers to decide; when they do, move the entry to 'terms'.",
+  "terms": [
+    {
+      "en": "account",
+      "hi": "खाता",
+      "gu": "ખાતું",
+      "avoid": ["अकाउंट", "એકાઉન્ટ"]
+    },
+    {
+      "en": "block (a guest hides another guest)",
+      "hi": "ब्लॉक",
+      "gu": "બ્લૉક",
+      "avoid": ["ब्लोक", "બ્લોક"],
+      "note": "Never used for a ban: blocking is something a guest does."
+    },
+    {
+      "en": "ban (IntroChat bars a phone number)",
+      "hi": "बैन",
+      "gu": "પ્રતિબંધ",
+      "avoid": ["प्रतिबंध", "બેન", "બૅન"],
+      "note": "Not 'block': guests can block each other, which is a different thing."
+    },
+    {
+      "en": "report",
+      "hi": "रिपोर्ट",
+      "gu": "રિપોર્ટ",
+      "avoid": [],
+      "note": "A guest reporting another. A complaint to the Grievance Officer is शिकायत / ફરિયાદ."
+    },
+    {
+      "en": "log in / log out",
+      "hi": "लॉग इन / लॉग आउट",
+      "gu": "લોગ ઇન / લોગ આઉટ",
+      "avoid": ["लॉगिन", "लॉग-इन", "લૉગ ઇન", "લૉગ આઉટ", "લોગિન"]
+    },
+    {
+      "en": "chat",
+      "hi": "चैट",
+      "gu": "ચેટ",
+      "avoid": ["ચૅટ"]
+    },
+    {
+      "en": "chat request",
+      "hi": "रिक्वेस्ट",
+      "gu": "રિક્વેસ્ટ",
+      "avoid": [],
+      "note": "Asking to delete an account is a different 'request': अनुरोध / વિનંતી."
+    },
+    {
+      "en": "message",
+      "hi": "मैसेज",
+      "gu": "મેસેજ",
+      "avoid": ["संदेश", "સંદેશ"]
+    },
+    {
+      "en": "delete (an account, data)",
+      "hi": "हटाना",
+      "gu": "કાઢી નાખવું",
+      "avoid": ["डिलीट", "ડિલીટ"],
+      "note": "Chats that disappear when a visit ends are 'erased': मिटाना / ભૂંસવું."
+    },
+    {
+      "en": "scan (a table QR code; also the entries in a subscription)",
+      "hi": "स्कैन",
+      "gu": "સ્કેન",
+      "avoid": ["સ્કૅન"]
+    },
+    {
+      "en": "subscription",
+      "hi": "सब्सक्रिप्शन",
+      "gu": "સબ્સ્ક્રિપ્શન",
+      "avoid": ["सदस्यता", "સભ્યપદ"]
+    },
+    {
+      "en": "payment",
+      "hi": "भुगतान",
+      "gu": "ચુકવણી",
+      "avoid": ["पेमेंट", "પેમેન્ટ"]
+    },
+    {
+      "en": "interests",
+      "hi": "रुचियाँ",
+      "gu": "રુચિઓ",
+      "avoid": ["रुचियां", "इंटरेस्ट", "ઇન્ટરેસ્ટ"]
+    },
+    {
+      "en": "location",
+      "hi": "लोकेशन",
+      "gu": "લોકેશન",
+      "avoid": []
+    },
+    {
+      "en": "restaurant",
+      "hi": "रेस्टोरेंट",
+      "gu": "રેસ્ટોરન્ટ",
+      "avoid": ["रेस्तरां"]
+    },
+    {
+      "en": "venue (any place using IntroChat)",
+      "hi": "जगह",
+      "gu": "જગ્યા",
+      "avoid": []
+    },
+    {
+      "en": "table",
+      "hi": "टेबल",
+      "gu": "ટેબલ",
+      "avoid": ["मेज़"]
+    },
+    {
+      "en": "visit",
+      "hi": "विज़िट",
+      "gu": "મુલાકાત",
+      "avoid": ["विजिट", "વિઝિટ"]
+    }
+  ],
+  "open": [
+    {
+      "en": "notification",
+      "hi": ["सूचना", "नोटिफ़िकेशन"],
+      "gu": ["સૂચના", "નોટિફિકેશન"],
+      "question": "The notification prompts say सूचना / સૂચના (as phones set to Hindi or Gujarati do); the privacy page and notification settings say नोटिफ़िकेशन / નોટિફિકેશન. Pick one."
+    },
+    {
+      "en": "notice (the consent screen)",
+      "hi": ["सूचना"],
+      "gu": ["સૂચના"],
+      "question": "Today the same word as 'notification'. Keep it, or use a different word for the consent notice?"
+    },
+    {
+      "en": "session / visit",
+      "hi": ["सेशन", "विज़िट"],
+      "gu": ["સેશન", "મુલાકાત"],
+      "question": "The English uses both words for the same thing (the time a guest is in at a venue). Should guests only ever see 'visit'?"
+    }
+  ]
+}

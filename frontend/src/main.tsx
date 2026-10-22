@@ -5,7 +5,7 @@ import '@fontsource/noto-sans-devanagari/600.css'
 import '@fontsource/noto-sans-gujarati/400.css'
 import '@fontsource/noto-sans-gujarati/600.css'
 import './index.css'
-import './i18n'
+import { i18nReady } from './i18n'
 
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
@@ -22,8 +22,13 @@ if (!rootElement) {
   throw new Error('Root element #root not found in index.html')
 }
 
-createRoot(rootElement, rootErrorHandlers).render(
-  <StrictMode>
-    <AppProviders />
-  </StrictMode>,
-)
+// Rendered once the guest's language file is in, so a Hindi or Gujarati guest
+// never sees an English first screen. i18nReady never rejects (it falls back
+// to English), so the app always renders.
+void i18nReady.then(() => {
+  createRoot(rootElement, rootErrorHandlers).render(
+    <StrictMode>
+      <AppProviders />
+    </StrictMode>,
+  )
+})

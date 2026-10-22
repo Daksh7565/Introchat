@@ -27,10 +27,16 @@ export interface PushRequest {
   conversationId: string | null
 }
 
-/** What the service worker receives and shows (sw.ts). */
+/**
+ * What the service worker receives (sw.ts). Facts only: the phone writes the
+ * text from the app's translation files (push.notifications in en/hi/gu.json),
+ * so every user-facing string lives in one place.
+ */
 export interface PushNotification {
-  title: string
-  body: string
+  kind: PushKind
+  /** The other guest's handle, for request and message notifications. */
+  handle: string | null
+  language: Language
   /** Same tag = replaces the earlier notification instead of stacking. */
   tag: string
   url: string
@@ -67,42 +73,14 @@ export function parseRequest(value: unknown): PushRequest {
   }
 }
 
-// Draft Hindi and Gujarati, reviewed with the rest of the app's text in M9.
-// {h} is the other guest's handle. Never any message text (§4.14).
-const TEXT: Record<Language, Record<PushKind, [title: string, body: string]>> = {
-  en: {
-    'request.received': ['{h} wants to chat', 'Open IntroChat to reply.'],
-    'request.accepted': ['{h} accepted your request', 'Say hello!'],
-    'chat.message': ['New message from {h}', 'Open IntroChat to read it.'],
-    'session.warning': ['Your time is almost up', 'Open IntroChat to keep chatting.'],
-    'session.final_prompt': ['Your time is up', 'Open IntroChat in the next 2 minutes to continue.'],
-  },
-  hi: {
-    'request.received': ['{h} चैट करना चाहते हैं', 'जवाब देने के लिए IntroChat खोलें।'],
-    'request.accepted': ['{h} ने आपकी रिक्वेस्ट स्वीकार की', 'हैलो कहें!'],
-    'chat.message': ['{h} का नया मैसेज', 'पढ़ने के लिए IntroChat खोलें।'],
-    'session.warning': ['आपका समय लगभग खत्म है', 'चैट जारी रखने के लिए IntroChat खोलें।'],
-    'session.final_prompt': ['आपका समय खत्म हो गया', 'जारी रखने के लिए 2 मिनट में IntroChat खोलें।'],
-  },
-  gu: {
-    'request.received': ['{h} ચેટ કરવા માંગે છે', 'જવાબ આપવા IntroChat ખોલો.'],
-    'request.accepted': ['{h} એ તમારી રિક્વેસ્ટ સ્વીકારી', 'હેલો કહો!'],
-    'chat.message': ['{h} નો નવો મેસેજ', 'વાંચવા માટે IntroChat ખોલો.'],
-    'session.warning': ['તમારો સમય લગભગ પૂરો થયો છે', 'ચેટ ચાલુ રાખવા IntroChat ખોલો.'],
-    'session.final_prompt': ['તમારો સમય પૂરો થયો', 'ચાલુ રાખવા 2 મિનિટમાં IntroChat ખોલો.'],
-  },
-}
-
 export function buildNotification(request: PushRequest): PushNotification {
-  const [title, body] = TEXT[request.language][request.kind]
-  const handle = request.handle ?? 'IntroChat'
   const tag =
     request.kind === 'chat.message' && request.conversationId
       ? `chat:${request.conversationId}`
       : request.kind.startsWith('session.')
         ? 'session'
         : 'requests'
-  return { title: title.replace('{h}', handle), body, tag, url: '/' }
+  return { kind: request.kind, handle: request.handle, language: request.language, tag, url: '/' }
 }
 
 /** Compares two secrets in time that does not depend on where they differ. */

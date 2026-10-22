@@ -16,7 +16,13 @@ function makePerson(chatState: ChatState): Person {
 }
 
 function renderCard(chatState: ChatState) {
-  const handlers = { onSendRequest: vi.fn(), onAcceptRequest: vi.fn(), onOpenChat: vi.fn() }
+  const handlers = {
+    onSendRequest: vi.fn(),
+    onAcceptRequest: vi.fn(),
+    onOpenChat: vi.fn(),
+    onReport: vi.fn(),
+    onBlock: vi.fn(),
+  }
   render(
     <ul>
       <PersonCard person={makePerson(chatState)} {...handlers} />

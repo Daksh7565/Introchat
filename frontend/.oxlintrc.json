@@ -11,5 +11,5 @@
     "eqeqeq": "error",
     "no-console": ["error", { "allow": ["error", "warn"] }]
   },
-  "ignorePatterns": ["dist", "dev-dist", "src/lib/database.types.ts"]
+  "ignorePatterns": ["dist", "dev-dist", ".wrangler", "src/lib/database.types.ts"]
 }

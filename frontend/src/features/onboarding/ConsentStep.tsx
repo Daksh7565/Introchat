@@ -30,6 +30,18 @@ export function ConsentStep({ stepLabel, saving, error, onAccept }: ConsentStepP
           </li>
         ))}
       </ul>
+      {/* Plain links, not a sentence with links inside (Trans): that one
+          component would add 2 KB to every guest's first download. A new tab,
+          so reading them does not lose this step. */}
+      <p className="flex flex-wrap gap-x-3 text-sm text-slate-600">
+        <span>{t('onboarding.consent.policies.lead')}</span>
+        <a href="/privacy" target="_blank" rel="noopener" className="underline">
+          {t('onboarding.consent.policies.privacy')}
+        </a>
+        <a href="/terms" target="_blank" rel="noopener" className="underline">
+          {t('onboarding.consent.policies.terms')}
+        </a>
+      </p>
       <label className="flex items-start gap-3">
         <input
           type="checkbox"

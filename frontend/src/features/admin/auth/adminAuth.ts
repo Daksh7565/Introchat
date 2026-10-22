@@ -82,3 +82,11 @@ export async function signInWithPassword(email: string, password: string): Promi
 export async function signOut(): Promise<void> {
   assertNoAuthError(await supabase.auth.signOut())
 }
+
+/**
+ * Changes the signed-in admin's password. The Console only offers this to an
+ * admin with 2-step verification done (aal2), so the session itself is the proof.
+ */
+export async function changePassword(password: string): Promise<void> {
+  assertNoAuthError(await supabase.auth.updateUser({ password }))
+}

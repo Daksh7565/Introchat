@@ -15,10 +15,12 @@ const TYPING_SHOW_FOR_MS = 4000
 interface ChatPanelProps {
   conversation: ConversationSummary
   onBack?: () => void
+  onReport: () => void
+  onBlock: () => void
 }
 
 /** One open conversation: its messages, sending, seen ticks and "typing…". */
-export function ChatPanel({ conversation, onBack }: ChatPanelProps) {
+export function ChatPanel({ conversation, onBack, onReport, onBlock }: ChatPanelProps) {
   const { t } = useTranslation()
   const client = useQueryClient()
   const id = conversation.id
@@ -116,6 +118,8 @@ export function ChatPanel({ conversation, onBack }: ChatPanelProps) {
           void channel.current?.send({ type: 'broadcast', event: 'typing', payload: {} })
         }}
         onBack={onBack}
+        onReport={onReport}
+        onBlock={onBlock}
       />
       <ErrorText error={messages.error} />
       {failed && (

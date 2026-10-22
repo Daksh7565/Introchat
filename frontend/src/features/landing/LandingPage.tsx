@@ -3,6 +3,7 @@ import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useParams } from 'react-router'
 import { ErrorText } from '../../components/ErrorText'
+import { LegalLinks } from '../../components/LegalLinks'
 import { AppError } from '../../lib/errors'
 import { GuestEntry } from '../onboarding/GuestEntry'
 import { getScannedVenue } from './api'
@@ -89,6 +90,9 @@ export function LandingPage() {
         onContinue={() => setEntering(true)}
       />
       <ErrorText error={location.error} />
+      <div className="mt-auto pt-8">
+        <LegalLinks />
+      </div>
     </div>
   )
 }

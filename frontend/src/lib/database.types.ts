@@ -39,6 +39,60 @@ export type Database = {
   }
   public: {
     Tables: {
+      account_deletion_requests: {
+        Row: {
+          created_at: string
+          handle: string
+          id: string
+          note: string | null
+          processed_at: string | null
+          processed_by: string | null
+          requested_at: string
+          status: string
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          handle: string
+          id?: string
+          note?: string | null
+          processed_at?: string | null
+          processed_by?: string | null
+          requested_at?: string
+          status?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          handle?: string
+          id?: string
+          note?: string | null
+          processed_at?: string | null
+          processed_by?: string | null
+          requested_at?: string
+          status?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "account_deletion_requests_processed_by_fkey"
+            columns: ["processed_by"]
+            isOneToOne: false
+            referencedRelation: "admins"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "account_deletion_requests_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       admins: {
         Row: {
           created_at: string
@@ -76,6 +130,7 @@ export type Database = {
       }
       app_settings: {
         Row: {
+          admin_editable: boolean
           allowed_values: string[] | null
           created_at: string
           description: string
@@ -89,6 +144,7 @@ export type Database = {
           venue_overridable: boolean
         }
         Insert: {
+          admin_editable?: boolean
           allowed_values?: string[] | null
           created_at?: string
           description: string
@@ -102,6 +158,7 @@ export type Database = {
           venue_overridable: boolean
         }
         Update: {
+          admin_editable?: boolean
           allowed_values?: string[] | null
           created_at?: string
           description?: string
@@ -466,6 +523,71 @@ export type Database = {
           },
         ]
       }
+      credit_ledger: {
+        Row: {
+          admin_id: string | null
+          created_at: string
+          delta: number
+          id: number
+          note: string | null
+          payment_id: string | null
+          reason: string
+          session_id: string | null
+          user_id: string
+        }
+        Insert: {
+          admin_id?: string | null
+          created_at?: string
+          delta: number
+          id?: never
+          note?: string | null
+          payment_id?: string | null
+          reason: string
+          session_id?: string | null
+          user_id: string
+        }
+        Update: {
+          admin_id?: string | null
+          created_at?: string
+          delta?: number
+          id?: never
+          note?: string | null
+          payment_id?: string | null
+          reason?: string
+          session_id?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "credit_ledger_admin_id_fkey"
+            columns: ["admin_id"]
+            isOneToOne: false
+            referencedRelation: "admins"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "credit_ledger_payment_id_fkey"
+            columns: ["payment_id"]
+            isOneToOne: false
+            referencedRelation: "payments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "credit_ledger_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "sessions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "credit_ledger_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       messages: {
         Row: {
           body: string
@@ -518,6 +640,101 @@ export type Database = {
           },
         ]
       }
+      payments: {
+        Row: {
+          amount_paise: number
+          created_at: string
+          currency: string
+          failed_at: string | null
+          id: string
+          paid_at: string | null
+          provider: string
+          provider_order_id: string | null
+          provider_payment_id: string | null
+          purpose: string
+          raw: Json | null
+          refund_note: string | null
+          refunded_at: string | null
+          refunded_by: string | null
+          session_id: string | null
+          status: string
+          updated_at: string
+          user_id: string | null
+          venue_id: string
+        }
+        Insert: {
+          amount_paise: number
+          created_at?: string
+          currency?: string
+          failed_at?: string | null
+          id?: string
+          paid_at?: string | null
+          provider?: string
+          provider_order_id?: string | null
+          provider_payment_id?: string | null
+          purpose: string
+          raw?: Json | null
+          refund_note?: string | null
+          refunded_at?: string | null
+          refunded_by?: string | null
+          session_id?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string | null
+          venue_id: string
+        }
+        Update: {
+          amount_paise?: number
+          created_at?: string
+          currency?: string
+          failed_at?: string | null
+          id?: string
+          paid_at?: string | null
+          provider?: string
+          provider_order_id?: string | null
+          provider_payment_id?: string | null
+          purpose?: string
+          raw?: Json | null
+          refund_note?: string | null
+          refunded_at?: string | null
+          refunded_by?: string | null
+          session_id?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string | null
+          venue_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payments_refunded_by_fkey"
+            columns: ["refunded_by"]
+            isOneToOne: false
+            referencedRelation: "admins"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "payments_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "sessions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payments_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payments_venue_id_fkey"
+            columns: ["venue_id"]
+            isOneToOne: false
+            referencedRelation: "venues"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           age_blocked: boolean
@@ -531,6 +748,7 @@ export type Database = {
           nickname: string | null
           phone_hash: string
           preferred_language: string
+          scan_credits: number
           updated_at: string
         }
         Insert: {
@@ -545,6 +763,7 @@ export type Database = {
           nickname?: string | null
           phone_hash: string
           preferred_language?: string
+          scan_credits?: number
           updated_at?: string
         }
         Update: {
@@ -559,6 +778,7 @@ export type Database = {
           nickname?: string | null
           phone_hash?: string
           preferred_language?: string
+          scan_credits?: number
           updated_at?: string
         }
         Relationships: []
@@ -621,6 +841,105 @@ export type Database = {
           window_start?: string
         }
         Relationships: []
+      }
+      reports: {
+        Row: {
+          action: string | null
+          created_at: string
+          evidence: Json | null
+          evidence_expires_at: string | null
+          id: string
+          note: string | null
+          reason: string
+          reported_handle: string
+          reported_id: string | null
+          reported_phone_hash: string
+          reported_session_id: string | null
+          reporter_id: string | null
+          review_note: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: string
+          updated_at: string
+          venue_id: string
+        }
+        Insert: {
+          action?: string | null
+          created_at?: string
+          evidence?: Json | null
+          evidence_expires_at?: string | null
+          id?: string
+          note?: string | null
+          reason: string
+          reported_handle: string
+          reported_id?: string | null
+          reported_phone_hash: string
+          reported_session_id?: string | null
+          reporter_id?: string | null
+          review_note?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          updated_at?: string
+          venue_id: string
+        }
+        Update: {
+          action?: string | null
+          created_at?: string
+          evidence?: Json | null
+          evidence_expires_at?: string | null
+          id?: string
+          note?: string | null
+          reason?: string
+          reported_handle?: string
+          reported_id?: string | null
+          reported_phone_hash?: string
+          reported_session_id?: string | null
+          reporter_id?: string | null
+          review_note?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          updated_at?: string
+          venue_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reports_reported_id_fkey"
+            columns: ["reported_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reports_reported_session_id_fkey"
+            columns: ["reported_session_id"]
+            isOneToOne: false
+            referencedRelation: "sessions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reports_reporter_id_fkey"
+            columns: ["reporter_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reports_reviewed_by_fkey"
+            columns: ["reviewed_by"]
+            isOneToOne: false
+            referencedRelation: "admins"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "reports_venue_id_fkey"
+            columns: ["venue_id"]
+            isOneToOne: false
+            referencedRelation: "venues"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       sessions: {
         Row: {
@@ -984,9 +1303,25 @@ export type Database = {
         }
         Returns: boolean
       }
+      admin_add_admin: { Args: { p_email: string }; Returns: string }
+      admin_add_blocked_term: { Args: { p_term: string }; Returns: string }
+      admin_ban_guest: {
+        Args: { p_days?: number; p_note: string; p_user_id: string }
+        Returns: string
+      }
       admin_clear_venue_setting: {
         Args: { p_key: string; p_venue_id: string }
         Returns: undefined
+      }
+      admin_close_venue_today: {
+        Args: { p_note: string; p_venue_id: string }
+        Returns: {
+          amount_paise: number
+          handle: string
+          kind: string
+          payment_id: string
+          session_id: string
+        }[]
       }
       admin_create_tables: {
         Args: { p_labels: string[]; p_venue_id: string }
@@ -1004,6 +1339,16 @@ export type Database = {
           p_type: string
         }
         Returns: string
+      }
+      admin_find_guest: {
+        Args: { p_handle: string }
+        Returns: {
+          handle: string
+          joined_at: string
+          last_visit_at: string
+          scan_credits: number
+          user_id: string
+        }[]
       }
       admin_get_venue: {
         Args: { p_venue_id: string }
@@ -1023,6 +1368,145 @@ export type Database = {
           updated_at: string
         }[]
       }
+      admin_grant_scans: {
+        Args: { p_note: string; p_scans: number; p_user_id: string }
+        Returns: number
+      }
+      admin_kick: {
+        Args: { p_note: string; p_session_id: string }
+        Returns: undefined
+      }
+      admin_lift_ban: {
+        Args: { p_ban_id: string; p_note: string }
+        Returns: undefined
+      }
+      admin_list_admins: {
+        Args: never
+        Returns: {
+          created_at: string
+          email: string
+          has_mfa: boolean
+          is_active: boolean
+          last_sign_in_at: string
+          user_id: string
+        }[]
+      }
+      admin_list_app_settings: {
+        Args: never
+        Returns: {
+          admin_editable: boolean
+          allowed_values: string[]
+          description: string
+          key: string
+          max_value: number
+          min_value: number
+          updated_at: string
+          value: Json
+          value_type: string
+          venue_overridable: boolean
+        }[]
+      }
+      admin_list_audit: {
+        Args: {
+          p_action_prefix?: string
+          p_before?: string
+          p_limit?: number
+          p_venue_id?: string
+        }
+        Returns: {
+          action: string
+          actor: string
+          actor_type: string
+          audit_id: number
+          created_at: string
+          meta: Json
+          target_id: string
+          target_type: string
+          venue_name: string
+        }[]
+      }
+      admin_list_bans: {
+        Args: { p_active_only?: boolean }
+        Returns: {
+          ban_id: string
+          created_at: string
+          created_by: string
+          expires_at: string
+          guest_handle: string
+          lifted_at: string
+          reason: string
+          scope: string
+          venue_name: string
+        }[]
+      }
+      admin_list_blocked_terms: {
+        Args: never
+        Returns: {
+          created_at: string
+          term: string
+        }[]
+      }
+      admin_list_deletion_requests: {
+        Args: { p_status?: string }
+        Returns: {
+          active_ban: boolean
+          handle: string
+          note: string
+          open_reports: number
+          processed_at: string
+          request_id: string
+          requested_at: string
+          status: string
+        }[]
+      }
+      admin_list_payments: {
+        Args: { p_limit?: number; p_status?: string; p_venue_id?: string }
+        Returns: {
+          amount_paise: number
+          created_at: string
+          guest_handle: string
+          paid_at: string
+          payment_id: string
+          provider_payment_id: string
+          purpose: string
+          refund_note: string
+          refunded_at: string
+          status: string
+          venue_name: string
+        }[]
+      }
+      admin_list_reports: {
+        Args: { p_limit?: number; p_status?: string }
+        Returns: {
+          action: string
+          created_at: string
+          has_evidence: boolean
+          note: string
+          reason: string
+          report_id: string
+          reported_handle: string
+          reported_live: boolean
+          reporter_handle: string
+          review_note: string
+          reviewed_at: string
+          status: string
+          venue_name: string
+        }[]
+      }
+      admin_list_spoof_flags: {
+        Args: { p_days?: number }
+        Returns: {
+          flags: Json
+          handle: string
+          live: boolean
+          session_id: string
+          start_accuracy_m: number
+          start_distance_m: number
+          started_at: string
+          user_id: string
+          venue_name: string
+        }[]
+      }
       admin_list_tables: {
         Args: { p_venue_id: string }
         Returns: {
@@ -1031,6 +1515,14 @@ export type Database = {
           is_active: boolean
           label: string
           qr_token: string
+        }[]
+      }
+      admin_list_tags: {
+        Args: { p_query?: string }
+        Returns: {
+          is_blocked: boolean
+          name: string
+          users: number
         }[]
       }
       admin_list_venue_settings: {
@@ -1059,9 +1551,64 @@ export type Database = {
           updated_at: string
         }[]
       }
+      admin_live_guests: {
+        Args: { p_venue_id: string }
+        Returns: {
+          away_since: string
+          expires_at: string
+          handle: string
+          is_offline: boolean
+          kind: string
+          scan_credits: number
+          session_id: string
+          spoof_flags: number
+          started_at: string
+          status: string
+          table_label: string
+          user_id: string
+        }[]
+      }
+      admin_mark_payment_refunded: {
+        Args: { p_note: string; p_payment_id: string }
+        Returns: undefined
+      }
+      admin_process_deletion: {
+        Args: { p_note: string; p_request_id: string }
+        Returns: undefined
+      }
       admin_regenerate_qr_token: {
         Args: { p_table_id: string }
         Returns: string
+      }
+      admin_remove_blocked_term: {
+        Args: { p_term: string }
+        Returns: undefined
+      }
+      admin_reopen_venue: {
+        Args: { p_note: string; p_venue_id: string }
+        Returns: undefined
+      }
+      admin_report_evidence: { Args: { p_report_id: string }; Returns: Json }
+      admin_resolve_report: {
+        Args: {
+          p_ban_days?: number
+          p_decision: string
+          p_note: string
+          p_report_id: string
+        }
+        Returns: undefined
+      }
+      admin_set_admin_active: {
+        Args: { p_active: boolean; p_user_id: string }
+        Returns: undefined
+      }
+      admin_set_app_setting: {
+        Args: { p_key: string; p_value: Json }
+        Returns: undefined
+      }
+      admin_set_tag_blocked: {
+        Args: { p_blocked: boolean; p_name: string }
+        Returns: undefined
       }
       admin_set_venue_active: {
         Args: { p_active: boolean; p_venue_id: string }
@@ -1074,6 +1621,33 @@ export type Database = {
       admin_set_venue_setting: {
         Args: { p_key: string; p_value: Json; p_venue_id: string }
         Returns: undefined
+      }
+      admin_sms_usage: {
+        Args: { p_days?: number }
+        Returns: {
+          attempts: number
+          day: string
+          reason: string
+          status: string
+        }[]
+      }
+      admin_stats: {
+        Args: { p_from: string; p_to: string; p_venue_id?: string }
+        Returns: {
+          avg_visit_minutes: number
+          guests_female: number
+          guests_male: number
+          guests_other: number
+          guests_undisclosed: number
+          payments: number
+          refunded_paise: number
+          reports: number
+          requests_accepted: number
+          requests_sent: number
+          revenue_paise: number
+          unique_guests: number
+          visits: number
+        }[]
       }
       admin_test_location: {
         Args: {
@@ -1107,16 +1681,66 @@ export type Database = {
         }
         Returns: undefined
       }
+      apply_block: {
+        Args: { p_blocked: string; p_blocker: string }
+        Returns: undefined
+      }
+      apply_payment: {
+        Args: {
+          p_amount_paise: number
+          p_payment_id: string
+          p_provider_payment_id: string
+          p_raw: Json
+        }
+        Returns: string
+      }
+      ban_guest: {
+        Args: {
+          p_admin_id: string
+          p_days: number
+          p_phone_hash: string
+          p_reason: string
+          p_user_id: string
+        }
+        Returns: string
+      }
       before_user_created_hook: { Args: { event: Json }; Returns: Json }
+      block_person: {
+        Args: { p_conversation_id?: string; p_session_id?: string }
+        Returns: undefined
+      }
       can_send: {
         Args: { p_conversation_id: string; p_user_id: string }
         Returns: boolean
+      }
+      cancel_account_deletion: { Args: never; Returns: undefined }
+      check_may_enter: {
+        Args: {
+          p_device_id: string
+          p_profile: Database["public"]["Tables"]["profiles"]["Row"]
+          p_venue_id: string
+        }
+        Returns: undefined
       }
       check_rate_limit: {
         Args: { p_key: string; p_limit: number; p_window: string }
         Returns: undefined
       }
+      close_conversations_of: {
+        Args: { p_hide: boolean; p_user_id: string }
+        Returns: undefined
+      }
       continue_free: {
+        Args: never
+        Returns: Database["public"]["CompositeTypes"]["session_state"]
+        SetofOptions: {
+          from: "*"
+          to: "session_state"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      continue_with_credit: {
         Args: never
         Returns: Database["public"]["CompositeTypes"]["session_state"]
         SetofOptions: {
@@ -1143,6 +1767,14 @@ export type Database = {
       end_session: {
         Args: { p_reason: string; p_session_id: string }
         Returns: undefined
+      }
+      entry_basis: {
+        Args: { p_user_id: string; p_venue_id: string }
+        Returns: {
+          basis: string
+          payment_id: string
+          resume_from: string
+        }[]
       }
       evaluate_location: {
         Args: {
@@ -1232,6 +1864,28 @@ export type Database = {
       hourly_cleanup: { Args: never; Returns: Json }
       is_admin: { Args: never; Returns: boolean }
       is_blocked_pair: { Args: { p_a: string; p_b: string }; Returns: boolean }
+      kick_guest: {
+        Args: {
+          p_admin_id: string
+          p_phone_hash: string
+          p_reason: string
+          p_user_id: string
+          p_venue_id: string
+        }
+        Returns: undefined
+      }
+      ledger_add: {
+        Args: {
+          p_admin_id?: string
+          p_delta: number
+          p_note?: string
+          p_payment_id?: string
+          p_reason: string
+          p_session_id?: string
+          p_user_id: string
+        }
+        Returns: number
+      }
       live_session_of: {
         Args: { p_user_id: string }
         Returns: {
@@ -1330,6 +1984,7 @@ export type Database = {
         Args: { p_conversation_id: string; p_up_to_message_id: number }
         Returns: undefined
       }
+      my_deletion_request: { Args: never; Returns: string }
       my_profile: {
         Args: never
         Returns: {
@@ -1364,7 +2019,52 @@ export type Database = {
         Args: { p_conversation_id: string; p_user_id: string }
         Returns: string
       }
+      payment_by_order: {
+        Args: { p_order_id: string }
+        Returns: {
+          amount_paise: number
+          payment_id: string
+          status: string
+        }[]
+      }
+      payment_for_verify: {
+        Args: { p_payment_id: string }
+        Returns: {
+          amount_paise: number
+          provider_order_id: string
+          status: string
+          user_id: string
+        }[]
+      }
+      payment_mark_failed: {
+        Args: { p_payment_id: string; p_raw: Json }
+        Returns: undefined
+      }
+      payment_set_order: {
+        Args: { p_order_id: string; p_payment_id: string }
+        Returns: undefined
+      }
       phone_hash: { Args: { p_phone: string }; Returns: string }
+      prepare_payment: {
+        Args: {
+          p_accuracy_m?: number
+          p_age_seconds?: number
+          p_device_id?: string
+          p_latitude?: number
+          p_longitude?: number
+          p_purpose: string
+          p_qr_token?: string
+          p_slug?: string
+          p_user_id: string
+        }
+        Returns: {
+          amount_paise: number
+          currency: string
+          payment_id: string
+          purpose: string
+          venue_name: string
+        }[]
+      }
       push_send_secret: { Args: never; Returns: string }
       push_subscription_gone: {
         Args: { p_endpoint: string }
@@ -1390,6 +2090,16 @@ export type Database = {
         Args: { p_send: boolean; p_topic: string }
         Returns: boolean
       }
+      report_person: {
+        Args: {
+          p_conversation_id?: string
+          p_note?: string
+          p_reason: string
+          p_session_id?: string
+        }
+        Returns: string
+      }
+      request_account_deletion: { Args: never; Returns: string }
       request_between: {
         Args: { p_session_a: string; p_session_b: string }
         Returns: {
@@ -1415,6 +2125,16 @@ export type Database = {
       }
       require_admin: { Args: never; Returns: undefined }
       require_guest: { Args: never; Returns: string }
+      require_inside: {
+        Args: {
+          p_accuracy_m: number
+          p_age_seconds: number
+          p_latitude: number
+          p_longitude: number
+          p_venue_id: string
+        }
+        Returns: number
+      }
       require_live_session: {
         Args: { p_user_id: string }
         Returns: {
@@ -1485,6 +2205,19 @@ export type Database = {
         Args: { p_accept: boolean; p_request_id: string }
         Returns: {
           conversation_id: string
+        }[]
+      }
+      safety_target: {
+        Args: {
+          p_conversation_id: string
+          p_session_id: string
+          p_user_id: string
+        }
+        Returns: {
+          conversation_id: string
+          session_id: string
+          target_id: string
+          venue_id: string
         }[]
       }
       save_push_subscription: {
@@ -1582,9 +2315,9 @@ export type Database = {
       update_profile: {
         Args: {
           p_birth_year: number
-          p_gender: string
+          p_gender?: string
           p_language: string
-          p_nickname: string
+          p_nickname?: string
         }
         Returns: string
       }
@@ -1639,6 +2372,13 @@ export type Database = {
         location_seconds: number | null
         server_now: string | null
         venue_id: string | null
+        scan_credits: number | null
+        continue_fee_paise: number | null
+        continue_minutes: number | null
+        subscription_enabled: boolean | null
+        subscription_price_paise: number | null
+        subscription_scans: number | null
+        subscription_session_minutes: number | null
       }
     }
   }

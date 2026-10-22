@@ -5,6 +5,7 @@ import {
   type PrecacheEntry,
 } from 'workbox-precaching'
 import { NavigationRoute, registerRoute } from 'workbox-routing'
+import { notificationFromPush } from './i18n/pushNotification'
 
 declare let self: ServiceWorkerGlobalScope & {
   __WB_MANIFEST: Array<PrecacheEntry | string>
@@ -24,21 +25,8 @@ cleanupOutdatedCaches()
 // single-page app, so all of them are served the precached index.html.
 registerRoute(new NavigationRoute(createHandlerBoundToURL('index.html')))
 
-// Push notifications (ARCHITECTURE §4.14). The server sends the finished text
-// in the guest's language (push-send); this only shows it. Never message text.
-interface PushPayload {
-  title: string
-  body: string
-  tag: string
-  url: string
-}
-
-function isPushPayload(value: unknown): value is PushPayload {
-  if (typeof value !== 'object' || value === null) return false
-  const v = value as Record<string, unknown>
-  return typeof v.title === 'string' && typeof v.body === 'string' && typeof v.tag === 'string'
-}
-
+// Push notifications (ARCHITECTURE §4.14). The server sends facts only and the
+// text comes from the app's translation files (pushNotification). Never message text.
 self.addEventListener('push', (event: PushEvent) => {
   let data: unknown = null
   try {
@@ -46,18 +34,20 @@ self.addEventListener('push', (event: PushEvent) => {
   } catch {
     // Not ours or malformed: show nothing rather than a broken notification.
   }
-  if (!isPushPayload(data)) return
-  event.waitUntil(
-    self.registration.showNotification(data.title, {
-      body: data.body,
-      tag: data.tag,
-      // A new message in the same chat replaces the old notification but still alerts.
-      renotify: true,
-      icon: '/pwa-192x192.png',
-      badge: '/pwa-64x64.png',
-      data: { url: data.url },
-    } as NotificationOptions),
-  )
+  const shown = notificationFromPush(data)
+  if (!shown) return
+  // renotify is missing from TypeScript's NotificationOptions but supported by
+  // Chrome and Android: a new message in the same chat replaces the old
+  // notification and still alerts, instead of updating it silently.
+  const options: NotificationOptions & { renotify: boolean } = {
+    body: shown.body,
+    tag: shown.tag,
+    renotify: true,
+    icon: '/pwa-192x192.png',
+    badge: '/pwa-64x64.png',
+    data: { url: shown.url },
+  }
+  event.waitUntil(self.registration.showNotification(shown.title, options))
 })
 
 // Tapping a notification brings the open app forward, or opens it.

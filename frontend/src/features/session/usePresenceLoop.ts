@@ -3,6 +3,8 @@ import { AppError } from '../../lib/errors'
 import { getReading, type Reading } from '../../lib/location'
 import { type PermissionState, type SessionState, sendHeartbeat } from './api'
 
+const LOST = new Set(['BANNED', 'NOT_A_GUEST', 'SESSION_NOT_ACTIVE'])
+
 interface Captured {
   reading: Reading
   capturedAtMs: number
@@ -20,14 +22,18 @@ interface Captured {
 export function usePresenceLoop(
   state: SessionState | null,
   onState: (state: SessionState) => void,
+  /** The server refused the heartbeat (banned, session gone): re-read the session. */
+  onLost?: () => void,
 ): void {
   const live = state !== null && state.status !== 'ended'
   const heartbeatMs = (state?.heartbeatSeconds ?? 30) * 1000
   const locationMs = (state?.locationSeconds ?? 120) * 1000
   // The latest callback, without restarting the timers when it changes.
   const onStateRef = useRef(onState)
+  const onLostRef = useRef(onLost)
   useEffect(() => {
     onStateRef.current = onState
+    onLostRef.current = onLost
   })
 
   useEffect(() => {
@@ -66,10 +72,13 @@ export function usePresenceLoop(
       try {
         const next = await sendHeartbeat(readingNow(), permission)
         if (!stopped) onStateRef.current(next)
-      } catch {
-        // A lost connection is expected on a phone; the next beat retries and
-        // the screen shows the offline banner from the browser's own status.
-        // Unexpected server errors were already reported by unwrap().
+      } catch (error) {
+        // A ban (or an account / session that no longer exists) will not pass
+        // on retry: let the screen re-read the session and show why. Anything
+        // else, mostly a lost connection, is retried by the next beat; the
+        // offline banner comes from the browser's own status, and unexpected
+        // server errors were already reported by unwrap().
+        if (error instanceof AppError && LOST.has(error.code) && !stopped) onLostRef.current?.()
       } finally {
         beating = false
       }

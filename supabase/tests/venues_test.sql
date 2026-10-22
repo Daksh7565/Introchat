@@ -132,12 +132,15 @@ insert into public.tables (venue_id, label) values
   ('10000000-0000-4000-8000-000000000001', 'Table 2');
 
 select is(
-  (select count(*)::integer from public.tables where qr_token ~ '^[A-Za-z0-9]{16}$'),
+  -- Only this test's venue: dev also holds real venues and tables.
+  (select count(*)::integer from public.tables
+   where venue_id = '10000000-0000-4000-8000-000000000001' and qr_token ~ '^[A-Za-z0-9]{16}$'),
   2,
   'every table gets a 16-character token'
 );
 select is(
-  (select count(distinct qr_token)::integer from public.tables),
+  (select count(distinct qr_token)::integer from public.tables
+   where venue_id = '10000000-0000-4000-8000-000000000001'),
   2,
   'tokens are distinct'
 );

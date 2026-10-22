@@ -1,5 +1,6 @@
 dist
 dev-dist
+.wrangler
 coverage
 node_modules
 package-lock.json

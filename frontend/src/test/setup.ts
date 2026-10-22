@@ -2,6 +2,8 @@ import '@testing-library/jest-dom/vitest'
 import { cleanup } from '@testing-library/react'
 import { afterEach } from 'vitest'
 import '../i18n'
+// Console screens are tested without AdminPage, which normally registers their text.
+import '../i18n/admin'
 
 // jsdom implements no layout, so it has no scrollIntoView; browsers do. Stubbed
 // so components that keep the newest chat message in view can render in tests.
